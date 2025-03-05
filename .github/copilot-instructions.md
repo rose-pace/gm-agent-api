@@ -38,3 +38,8 @@
 
     user = User(id=1, name='John Doe', email='john.doe@example.com')
     ```
+
+- **Code Quality**: Validate the accuracy and proper usage of code including:
+    - Check for and update calls to deprecated apis
+    - Validate code conventions for the language and framework are being followed
+    - Suggest applicable patterns for solving common problems
