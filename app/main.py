@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ from app.tools.rag_tools import RAGTool
 from app.db import VectorStore
 from app.models import Query, Response, Document
 
+load_dotenv()
 
 # Global variables for our agents and tools
 gm_agent = None
