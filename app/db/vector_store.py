@@ -54,12 +54,14 @@ class VectorStore:
             ids=ids
         )
     
-    async def query(self, query_text: str, top_k: int = 3):
+    async def query(self, query_text: str, metadata_filters: dict = None, documents_filter: dict = None, top_k: int = 3):
         """
         Query the vector store for relevant documents
         
         Args:
             query_text: The query text
+            metadata_filters: Optional dictionary of metadata filters
+            documents_filter: Optional dictionary of document content filters
             top_k: Maximum number of results to return
             
         Returns:
@@ -67,7 +69,9 @@ class VectorStore:
         """
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=top_k
+            n_results=top_k,
+            where=metadata_filters,
+            where_document=documents_filter
         )
         
         documents = []
@@ -87,14 +91,24 @@ class VectorStore:
         
         return documents
     
-    def delete_document(self, document_id: str):
+    def delete_documents(self, document_ids: list[str] = None, where: dict = None):
         """
-        Delete a document from the vector store
+        Delete documents from the vector store
         
         Args:
-            document_id: The ID of the document to delete
+            document_ids: Optional list of document IDs to delete
+            where: Optional dictionary of metadata filters for deletion
+            
+        Raises:
+            ValueError: If neither document_ids nor where is provided
         """
-        self.collection.delete(ids=[document_id])
+        if document_ids is None and where is None:
+            raise ValueError('Either document_ids or where must be provided')
+        
+        self.collection.delete(
+            ids=document_ids,
+            where=where
+        )
     
     def clear(self):
         """
