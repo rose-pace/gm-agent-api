@@ -1,4 +1,5 @@
 from app.models import RAGResult
+from app.utils.prompt_generator import generate_rag_query, RAGQueryParams
     
 class RAGTool:
     """
@@ -15,13 +16,15 @@ class RAGTool:
         """
         self.vector_store = vector_store
     
-    async def retrieve(self, query: str, top_k: int = 3) -> RAGResult:
+    async def retrieve(self, query: str, top_k: int = 3, context: str = None, query_type: str = 'specific') -> RAGResult:
         """
         Retrieve relevant documents for the given query
         
         Args:
             query: The query to retrieve documents for
             top_k: Maximum number of documents to retrieve
+            context: Additional context for the query
+            query_type: Type of query ('specific', 'creative', or 'rules')
             
         Returns:
             RAGResult containing retrieved text and sources
@@ -29,8 +32,15 @@ class RAGTool:
         if not self.vector_store:
             return RAGResult(text='No vector store available')
             
+        # Generate optimized search query using the template
+        search_query = generate_rag_query(RAGQueryParams(
+            user_query=query,
+            context=context,
+            query_type=query_type
+        ))
+        
         # Retrieve relevant documents
-        results = await self.vector_store.query(query, top_k=top_k)
+        results = await self.vector_store.query(search_query, top_k=top_k)
         
         # Extract the content and metadata
         documents = []

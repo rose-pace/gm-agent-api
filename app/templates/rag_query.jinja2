@@ -1,0 +1,23 @@
+Given the following user request: "{{ user_query }}"
+
+{% if context %}
+Additional context:
+{{ context }}
+{% endif %}
+
+I need to search through my knowledge base to find relevant information. 
+Please formulate a search query that will help retrieve the most relevant information to answer this request.
+
+The search query should:
+1. Extract key entities and concepts from the user's request
+2. Be concise and focused on retrieving relevant information
+3. Include important keywords that would appear in relevant documents
+4. Omit unnecessary words like articles and conjunctions
+
+{% if query_type == "specific" %}
+Focus on finding specific, factual information that directly answers the question.
+{% elif query_type == "creative" %}
+Focus on finding inspirational material that can help generate creative content.
+{% elif query_type == "rules" %}
+Focus on finding rules and mechanics information to answer the question accurately.
+{% endif %}

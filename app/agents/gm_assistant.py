@@ -1,7 +1,10 @@
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+from huggingface_hub import InferenceClient
 from langchain_openai import ChatOpenAI
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 import os
+from app.utils.prompt_generator import generate_agent_instruction, AgentInstructionParams, Tool
 
 class GMAssistantAgent:
     """
@@ -9,20 +12,40 @@ class GMAssistantAgent:
     using RAG and other tools.
     """
     
-    def __init__(self, tools=None):
+    def __init__(self, tools=None, game_system=None, campaign_setting=None):
         """
         Initialize the GM Assistant Agent with the given tools
         
         Args:
             tools: List of tools the agent can use
+            game_system: Optional game system to specialize in
+            campaign_setting: Optional campaign setting
         """
         self.tools = tools or []
+        self.game_system = game_system
+        self.campaign_setting = campaign_setting
+
+        # Generate the system prompt for the agent
+        tool_models = []
+        for tool in self.tools:
+            tool_name = getattr(tool, 'name', tool.__class__.__name__)
+            tool_desc = getattr(tool, 'description', 'No description available')
+            tool_models.append(Tool(name=tool_name, description=tool_desc))
         
-        # You would initialize your LLM here
+        self.system_prompt = generate_agent_instruction(
+            AgentInstructionParams(
+                game_system=self.game_system,
+                campaign_setting=self.campaign_setting,
+                tools=tool_models
+            )
+        )
+
+        # Initialize your LLM here
         # Uncomment and customize when implementing
         # self.llm = ChatOpenAI(
         #    model_name='gpt-4',
-        #    temperature=0.7
+        #    temperature=0.7,
+        #    system=self.system_prompt
         # )
     
     async def process_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -36,9 +59,6 @@ class GMAssistantAgent:
         Returns:
             A dictionary with the answer, sources, and optionally confidence score
         """
-        # TODO: Implement the actual agent logic
-        # This is a placeholder implementation
-        
         # Example retrieval from the RAG tool
         rag_results = []
         sources = []
@@ -46,7 +66,15 @@ class GMAssistantAgent:
         # Use the RAG tool if available
         for tool in self.tools:
             if hasattr(tool, 'retrieve'):
-                rag_results = await tool.retrieve(query)
+                context_str = None
+                if context and isinstance(context, dict):
+                    context_str = str(context)
+                
+                rag_results = await tool.retrieve(
+                    query=query, 
+                    context=context_str,
+                    query_type='specific'  # Could be dynamic based on query analysis
+                )
                 if rag_results and hasattr(rag_results, 'sources'):
                     sources = rag_results.sources
         

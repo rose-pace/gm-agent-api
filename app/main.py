@@ -8,6 +8,7 @@ from app.agents.gm_assistant import GMAssistantAgent
 from app.tools.rag_tools import RAGTool
 from app.db import VectorStore
 from app.models import Query, Response, Document
+from app.utils.prompt_generator import initialize_prompts
 
 load_dotenv()
 
@@ -22,6 +23,9 @@ async def lifespan(app: FastAPI):
     Context manager to handle the startup and shutdown of the app
     """  
     global gm_agent, rag_tool, vector_store
+    
+    # Initialize prompt templates
+    initialize_prompts()
     
     # Initialize vector store
     vector_store = VectorStore(
