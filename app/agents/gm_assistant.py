@@ -60,23 +60,33 @@ class GMAssistantAgent:
             A dictionary with the answer, sources, and optionally confidence score
         """
         # Example retrieval from the RAG tool
-        rag_results = []
+        rag_results = None
         sources = []
         
         # Use the RAG tool if available
-        for tool in self.tools:
-            if hasattr(tool, 'retrieve'):
-                context_str = None
-                if context and isinstance(context, dict):
-                    context_str = str(context)
-                
-                rag_results = await tool.retrieve(
-                    query=query, 
-                    context=context_str,
-                    query_type='specific'  # Could be dynamic based on query analysis
-                )
-                if rag_results and hasattr(rag_results, 'sources'):
+        rag_tool = next((tool for tool in self.tools if hasattr(tool, 'retrieve')), None)
+        if rag_tool:
+            context_str = None
+            if context and isinstance(context, dict):
+                context_str = str(context)
+            
+            rag_results = await rag_tool.retrieve(
+                query=query, 
+                context=context_str,
+                query_type='specific'  # Could be dynamic based on query analysis
+            )
+            if rag_results and hasattr(rag_results, 'sources'):
+                sources = rag_results.sources
+        
+        # Enrich with graph data if available
+        graph_tool = next((tool for tool in self.tools if getattr(tool, 'name', '') == 'graph_query_tool'), None)
+        if graph_tool and rag_results:
+            try:
+                rag_results = await graph_tool.enrich_rag_results(rag_results)
+                if hasattr(rag_results, 'sources'):
                     sources = rag_results.sources
+            except Exception as e:
+                print(f"Error enriching results with graph data: {e}")
         
         # Placeholder response
         # In a real implementation, you would:

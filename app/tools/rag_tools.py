@@ -1,5 +1,8 @@
 from app.models import RAGResult
 from app.utils.prompt_generator import generate_rag_query, RAGQueryParams
+from app.db.vector_store import VectorStore
+from app.classifiers.light_embed_classifier import LightEmbeddingClassifier
+from typing import Optional, Dict, Any
     
 class RAGTool:
     """
@@ -7,14 +10,25 @@ class RAGTool:
     to retrieve relevant context for answering questions.
     """
     
-    def __init__(self, vector_store=None):
+    def __init__(self, vector_store: VectorStore=None, 
+                 classifier: Optional[LightEmbeddingClassifier]=None,
+                 metadata_path: str='./data/document_metadata.json'):
         """
         Initialize the RAG tool with a vector store
         
         Args:
             vector_store: The vector store to use for retrieval
+            classifier: Optional pre-initialized LightEmbeddingClassifier
+            metadata_path: Path to metadata JSON file for classifier initialization
         """
         self.vector_store = vector_store
+        self.classifier = classifier
+        if not self.classifier:
+            try:
+                self.classifier = LightEmbeddingClassifier(metadata_path)
+            except Exception as e:
+                print(f"Could not initialize classifier: {e}")
+                self.classifier = None
     
     async def retrieve(self, query: str, top_k: int = 3, context: str = None, query_type: str = 'specific') -> RAGResult:
         """
@@ -39,8 +53,23 @@ class RAGTool:
             query_type=query_type
         ))
         
-        # Retrieve relevant documents
-        results = await self.vector_store.query(search_query, top_k=top_k)
+        # Use classifier to generate metadata filters if available
+        metadata_filter = None
+        if self.classifier:
+            classification = self.classifier.classify(query)
+            if classification['collections'] or classification['tags']:
+                metadata_filter = {}
+                if classification['collections']:
+                    metadata_filter['Collection'] = classification['collections'][0]
+                if classification['tags']:
+                    metadata_filter['Tags'] = classification['tags'][0]
+        
+        # Retrieve relevant documents with metadata filtering
+        results = await self.vector_store.query(search_query, top_k=top_k, where=metadata_filter)
+        
+        # If no results with metadata filter, retry without filter
+        if not results and metadata_filter:
+            results = await self.vector_store.query(search_query, top_k=top_k)
         
         # Extract the content and metadata
         documents = []

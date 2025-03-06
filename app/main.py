@@ -1,3 +1,4 @@
+from typing import Optional
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
@@ -7,8 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.agents.gm_assistant import GMAssistantAgent
 from app.tools.rag_tools import RAGTool
 from app.db import VectorStore
-from app.models import Query, Response, Document
+from app.models import Query, Response, Document, GraphEdge, GraphNode
 from app.utils.prompt_generator import initialize_prompts
+from app.db.graph_store import GraphStore
+from app.tools.graph_query_tool import GraphQueryTool
 
 load_dotenv()
 
@@ -16,13 +19,15 @@ load_dotenv()
 gm_agent = None
 rag_tool = None
 vector_store = None
+graph_store = None
+graph_tool = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Context manager to handle the startup and shutdown of the app
     """  
-    global gm_agent, rag_tool, vector_store
+    global gm_agent, rag_tool, vector_store, graph_store, graph_tool
     
     # Initialize prompt templates
     initialize_prompts()
@@ -33,13 +38,21 @@ async def lifespan(app: FastAPI):
         persist_directory='./data/vector_db'
     )
     
-    # Initialize RAG tool
+    # Initialize graph store
+    graph_store = GraphStore(file_path='./data/graph_store.json')
+    
+    # Initialize tools
     rag_tool = RAGTool(vector_store=vector_store)
+    graph_tool = GraphQueryTool(graph_store=graph_store)
     
     # Initialize GM assistant agent with tools
-    gm_agent = GMAssistantAgent(tools=[rag_tool])
+    gm_agent = GMAssistantAgent(tools=[rag_tool, graph_tool])
 
     yield
+    
+    # Save graph data on shutdown
+    if graph_store:
+        graph_store.save_to_file('./data/graph_store.json')
 
 # Create FastAPI app
 app = FastAPI(
@@ -89,6 +102,66 @@ async def upload_document(document: Document):
         return {'status': 'success', 'message': 'Document added to the knowledge base'}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Error adding document: {str(e)}')
+
+@app.post('/graph/add_entity')
+async def add_entity(node: GraphNode):
+    """
+    Add an entity to the graph store
+    """
+    if not graph_store:
+        raise HTTPException(status_code=503, detail='Graph store not initialized')
+    
+    try:
+        node_id = graph_store.add_node(node)
+        return {'status': 'success', 'id': node_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error adding entity: {str(e)}')
+
+@app.post('/graph/add_relationship')
+async def add_relationship(edge: GraphEdge):
+    """
+    Add a relationship between entities to the graph store
+    """
+    if not graph_store:
+        raise HTTPException(status_code=503, detail='Graph store not initialized')
+    
+    try:
+        edge_id = graph_store.add_edge(edge)
+        return {'status': 'success', 'id': edge_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error adding relationship: {str(e)}')
+
+@app.get('/graph/get_entity/{identifier}')
+async def get_entity(identifier: str):
+    """
+    Get an entity by ID or name
+    """
+    if not graph_tool:
+        raise HTTPException(status_code=503, detail='Graph tool not initialized')
+    
+    try:
+        entity = await graph_tool.get_entity(identifier)
+        if entity:
+            return entity
+        raise HTTPException(status_code=404, detail=f'Entity not found: {identifier}')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error getting entity: {str(e)}')
+
+@app.get('/graph/get_related/{identifier}')
+async def get_related(identifier: str, relation_type: Optional[str] = None):
+    """
+    Get entities related to the specified entity
+    """
+    if not graph_tool:
+        raise HTTPException(status_code=503, detail='Graph tool not initialized')
+    
+    try:
+        related = await graph_tool.get_related_entities(identifier, relation_type)
+        return related
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error getting related entities: {str(e)}')
 
 if __name__ == '__main__':
     import uvicorn
