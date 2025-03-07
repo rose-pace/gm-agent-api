@@ -90,7 +90,7 @@ def load_config(config_path: str) -> Optional[ProcessorRegistry]:
                 logger.error(f"Unsupported configuration format: {path.suffix}")
                 return None
         
-        return ProcessorRegistry.parse_obj(config_data)
+        return ProcessorRegistry.model_validate(config_data)
         
     except Exception as e:
         logger.error(f"Error loading configuration: {e}")
