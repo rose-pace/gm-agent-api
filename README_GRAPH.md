@@ -13,7 +13,14 @@ This extension to the `gm-agent-api` project adds a comprehensive graph database
 
 ### Schema Definition
 
-The schema is defined in `app/schema/graph_schema.py` and includes:
+The schema is defined across several files in `app/schema/`:
+
+- `types.py`: Entity types, relationship types, and property definitions
+- `validation.py`: Validation functions for schema integrity
+- `schema_store.py`: Schema-enforced graph store implementation
+- `examples.py`: Example graph creation utilities
+
+These files include:
 
 - Entity types for lore (DEITY, RACE, LOCATION, EVENT, etc.)
 - Entity types for gameplay (NPC, FACTION, PARTY_MEMBER, etc.)
@@ -114,7 +121,7 @@ This graph database can be integrated with LLM agents to enhance their knowledge
 
 To extend the schema for your own needs:
 
-1. Add new entity types to the `EntityType` enum in `graph_schema.py`
+1. Add new entity types to the `EntityType` enum in `types.py`
 2. Add new relationship types to the `RelationshipType` enum
 3. Create property classes for your new types
 4. Update the `ENTITY_PROPERTIES` and `RELATIONSHIP_PROPERTIES` dictionaries

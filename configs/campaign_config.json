@@ -1,0 +1,59 @@
+{
+  "vector_processor": {
+    "chunking_strategy": "markdown",
+    "chunk_size": 800,
+    "chunk_overlap": 150,
+    "include_metadata": true
+  },
+  "graph_processor": {
+    "extract_entities": true,
+    "extract_relationships": true,
+    "validate_schema": true,
+    "default_entity_type": "CONCEPT",
+    "entity_patterns": [
+      {
+        "pattern_type": "CHARACTER",
+        "regex_pattern": "### Character: (.*?)\\n",
+        "yaml_paths": ["character", "Character"],
+        "default_properties": {
+          "entity_category": "person"
+        }
+      },
+      {
+        "pattern_type": "LOCATION",
+        "yaml_paths": ["location", "Location", "place", "Place"],
+        "default_properties": {
+          "entity_category": "place"
+        }
+      },
+      {
+        "pattern_type": "EVENT",
+        "regex_pattern": "### Event: (.*?)\\n",
+        "yaml_paths": ["event", "Event"],
+        "default_properties": {
+          "entity_category": "occurrence"
+        }
+      }
+    ],
+    "relationship_patterns": [
+      {
+        "relationship_type": "VISITED",
+        "regex_pattern": "(.*?) visited (.*?)[\\.,]",
+        "source_group": 1,
+        "target_group": 2,
+        "default_properties": {
+          "relation_category": "travel"
+        }
+      },
+      {
+        "relationship_type": "KNOWS",
+        "regex_pattern": "(.*?) (knows|met) (.*?)[\\.,]",
+        "source_group": 1,
+        "target_group": 3,
+        "default_properties": {
+          "relation_category": "social"
+        }
+      }
+    ]
+  }
+}
