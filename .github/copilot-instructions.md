@@ -43,3 +43,4 @@
     - Check for and update calls to deprecated apis
     - Validate code conventions for the language and framework are being followed
     - Suggest applicable patterns for solving common problems
+    - Place models in the models package at src/app/models
