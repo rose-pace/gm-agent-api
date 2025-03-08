@@ -118,14 +118,13 @@ class GraphProcessor(BaseProcessor):
             )
         )
     
-    def process_document(self, content: str, file_path: Path, metadata: Dict[str, Any]) -> None:
+    def process_document(self, content: str, file_path: Path) -> None:
         """
         Process a document by extracting entities and relationships.
         
         Args:
             content: Document content
             file_path: Path to the document
-            metadata: Additional metadata
         """
         if not content or not self.config.extract_entities and not self.config.extract_relationships:
             return

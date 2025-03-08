@@ -7,7 +7,7 @@ import re
 import yaml
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
@@ -29,7 +29,7 @@ class VectorProcessor(BaseProcessor):
     Processor that handles document chunking and storage in vector database.
     """
     
-    def __init__(self, vector_store: VectorStore, chunking_strategy: str = 'markdown'):
+    def __init__(self, vector_store: VectorStore, chunking_strategy: str = 'markdown', **kwargs):
         """
         Initialize the vector processor.
         
@@ -40,15 +40,18 @@ class VectorProcessor(BaseProcessor):
         self.vector_store = vector_store
         self.chunking_strategy = chunking_strategy
         self.chunks = []
+
+        if kwargs.items():
+            self.chunk_size = kwargs.get('chunk_size')
+            self.chunk_overlap = kwargs.get('chunk_overlap')
     
-    def process_document(self, content: str, file_path: Path, metadata: Dict[str, Any]) -> None:
+    def process_document(self, content: str, file_path: Path) -> None:
         """
         Process a document by chunking it and adding to vector store.
         
         Args:
             content: Document content
             file_path: Path to the document
-            metadata: Additional metadata
         """
         if not content:
             return
@@ -107,8 +110,8 @@ class VectorProcessor(BaseProcessor):
     def _fixed_size_chunking(self, content: str, file_name: str) -> List[Dict[str, Any]]:
         """Split document into fixed-size chunks"""
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=self.chunk_size or 1000,
+            chunk_overlap=self.chunk_overlap or 200,
             length_function=len,
             separators=['\n## ', '\n### ', '\n#### ', '\n', ' ', '']
         )
@@ -120,6 +123,7 @@ class VectorProcessor(BaseProcessor):
                 'id': f'{file_name}-chunk-{i}',
                 'text': chunk,
                 'metadata': {
+                    'document_title': file_name,
                     'source': str(file_name),
                     'chunk_type': 'fixed_size',
                     'chunk_index': i
@@ -130,6 +134,7 @@ class VectorProcessor(BaseProcessor):
 
     def _yaml_structure_chunking(self, content: str, file_name: str) -> List[Dict[str, Any]]:
         """Extract and process YAML blocks as structured data chunks"""
+        # TODO: I don't think adding YAML to the vector store is necessary but keeping this for now
         yaml_blocks = self._extract_yaml_blocks(content)
         chunks = []
         
@@ -155,14 +160,28 @@ class VectorProcessor(BaseProcessor):
         """Combine markdown text with related YAML data"""
         # split markdown text
         md_splitter = MarkdownTextSplitter(
-            chunk_size=1000, 
-            chunk_overlap=100
+            chunk_size=self.chunk_size or 1000, 
+            chunk_overlap=self.chunk_overlap or 100
         )
         
         chunks = md_splitter.split_text(content)
 
         # Get document title from first block
         title = chunks[0].split('\n')[0].strip(' #') if chunks else file_name
+
+        metadata = {
+            'document_title': title,
+            'source': str(file_name),
+            'collection': None,
+            'tags': [],
+        }
+        # Extract metadata from YAML block beneath ## Document Notes
+        document_notes = next((chunk for chunk in chunks if '## Document Notes' in chunk), None)
+        if document_notes:
+            yaml_block = self._extract_yaml_blocks(document_notes)
+            if yaml_block:
+                metadata['collection'] = yaml_block[0].get('collection')
+                metadata['tags'] = yaml_block[0].get('tags', [])
 
         # Loop through markdown chunks and extract YAML blocks
         processed_chunks = []
@@ -179,9 +198,7 @@ class VectorProcessor(BaseProcessor):
                 processed_chunks.append({
                     'id': yaml_chunk_id,
                     'text': yaml_text,
-                    'metadata': {
-                        'document_title': title,
-                        'source': str(file_name),
+                    'metadata': metadata | {
                         'chunk_type': 'markdown_yaml',
                         'chunk_index': i,
                         'chunk_header': chunk_header,
@@ -193,9 +210,7 @@ class VectorProcessor(BaseProcessor):
             processed_chunks.append({
                 'id': f'{file_name}-markdown-{i}',
                 'text': chunk,
-                'metadata': {
-                    'document_title': title,
-                    'source': str(file_name),
+                'metadata': metadata | {
                     'chunk_type': 'markdown',
                     'chunk_index': i,
                     'chunk_header': chunk_header,
@@ -209,8 +224,8 @@ class VectorProcessor(BaseProcessor):
         """Create overlapping chunks to preserve context"""
         # Using TokenTextSplitter for token-based sliding window
         text_splitter = TokenTextSplitter(
-            chunk_size=500,
-            chunk_overlap=150
+            chunk_size=self.chunk_size or 500,
+            chunk_overlap=self.chunk_overlap or 150
         )
         
         chunks = text_splitter.split_text(content)

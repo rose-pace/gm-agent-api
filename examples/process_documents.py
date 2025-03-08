@@ -2,7 +2,6 @@
 Example script demonstrating how to use the document processors.
 """
 import logging
-from pathlib import Path
 
 from app.db import VectorStore
 from app.db.graph_store import GraphStore

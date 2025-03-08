@@ -3,7 +3,7 @@ Processor Configuration Models
 
 Defines Pydantic models for configuring document processors.
 """
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -29,10 +29,6 @@ class VectorProcessorConfig(BaseModel):
     chunk_overlap: int = Field(
         default=200,
         description='Overlap between consecutive chunks'
-    )
-    include_metadata: bool = Field(
-        default=True,
-        description='Whether to include document metadata in vector store'
     )
 
 

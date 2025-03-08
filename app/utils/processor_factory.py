@@ -78,7 +78,9 @@ def create_vector_processor(
     """
     return VectorProcessor(
         vector_store=vector_store,
-        chunking_strategy=config.chunking_strategy.value
+        chunking_strategy=config.chunking_strategy.value,
+        chunk_size=config.chunk_size,
+        chunk_overlap=config.chunk_overlap,
     )
 
 

@@ -14,14 +14,13 @@ class BaseProcessor(ABC):
     """
     
     @abstractmethod
-    def process_document(self, content: str, file_path: Path, metadata: Dict[str, Any]) -> None:
+    def process_document(self, content: str, file_path: Path) -> None:
         """
         Process a single document.
         
         Args:
             content: The document content as text
             file_path: Path to the source document
-            metadata: Additional metadata about the document
         """
         pass
     

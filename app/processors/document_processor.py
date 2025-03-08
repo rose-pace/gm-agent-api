@@ -56,16 +56,9 @@ class DocumentProcessor:
                 if not content:
                     continue
                 
-                # Basic metadata about the document
-                metadata = {
-                    'filename': doc_path.name,
-                    'extension': doc_path.suffix,
-                    'full_path': str(doc_path)
-                }
-                
                 # Process with each registered processor
                 for processor in self.processors:
-                    processor.process_document(content, doc_path, metadata)
+                    processor.process_document(content, doc_path)
                 
             except Exception as e:
                 logger.error(f'Error processing {doc_path}: {e}')
