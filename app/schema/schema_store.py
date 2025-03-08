@@ -2,7 +2,7 @@
 Schema Enforced Graph Store
 
 This module provides a wrapper around the GraphStore that enforces
-schema validation rules for the Starcrash setting graph database.
+schema validation rules for the rpg setting graph database.
 """
 from typing import Dict, Any, Optional
 from app.db.graph_store import GraphStore

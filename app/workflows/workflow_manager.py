@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from app.models.agent_config import AgentConfig, WorkflowConfig, WorkflowType
-from app.models.model_config import ModelConfig
+from app.models.configuration import ModelConfig
 from app.llm.model_provider import ModelProviderFactory
 from app.workflows.base_workflow import BaseWorkflow, WorkflowResult
 from app.workflows.rag_workflow import RAGWorkflow
@@ -100,15 +100,15 @@ class WorkflowManager:
             try:
                 # Get the model configuration for this workflow
                 if workflow_config.model:
-                    model_config = self.config.model_config.get_model_by_name(workflow_config.model)
-                    if not model_config:
+                    configuration = self.config.configuration.get_model_by_name(workflow_config.model)
+                    if not configuration:
                         logger.warning(f"Model {workflow_config.model} not found, using default")
-                        model_config = self.config.model_config.default_llm
+                        configuration = self.config.configuration.default_llm
                 else:
-                    model_config = self.config.model_config.default_llm
+                    configuration = self.config.configuration.default_llm
                 
                 # Create the model provider
-                model_provider = ModelProviderFactory.create_provider(model_config)
+                model_provider = ModelProviderFactory.create_provider(configuration)
                 
                 # Get workflow class based on type
                 workflow_class = self._workflow_classes.get(workflow_config.type)

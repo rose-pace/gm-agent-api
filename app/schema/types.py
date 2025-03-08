@@ -1,8 +1,8 @@
 """
-Starcrash RPG Setting Graph Schema Types
+RPG Setting Graph Schema Types
 
 This file defines the schema types for the graph database used to store RPG setting
-information for the Starcrash campaign setting. It includes entity types,
+information for the campaign setting. It includes entity types,
 relationship types, and property definitions.
 """
 from enum import Enum

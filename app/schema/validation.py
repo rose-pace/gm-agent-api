@@ -1,5 +1,5 @@
 """
-Starcrash RPG Setting Graph Schema Validation
+RPG Setting Graph Schema Validation
 
 This file provides validation utilities for the graph database schema,
 ensuring that nodes and edges conform to the defined types and rules.
