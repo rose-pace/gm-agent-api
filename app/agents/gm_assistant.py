@@ -138,7 +138,7 @@ class GMAssistantAgent:
         default_config = {
             'name': 'Game Master Assistant',
             'description': 'AI assistant for tabletop RPG game masters',
-            'model_config': {
+            'configuration': {
                 'default_llm': {
                     'name': 'default_model',
                     'provider': 'huggingface',

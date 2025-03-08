@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional, Union, Literal
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from app.models.model_config import ModelConfig, HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig
+from app.models.configuration import ModelConfig, HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig
 
 
 class WorkflowType(str, Enum):
@@ -57,7 +57,7 @@ class AgentConfig(BaseModel):
     """Overall agent configuration"""
     name: str
     description: Optional[str] = None
-    model_config: ModelConfig
+    configuration: ModelConfig
     workflows: List[WorkflowConfig]
     
     def get_default_workflow(self) -> Optional[WorkflowConfig]:

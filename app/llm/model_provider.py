@@ -6,7 +6,7 @@ import os
 import logging
 from abc import ABC, abstractmethod
 
-from app.models.model_config import (
+from app.models.configuration import (
     ModelProviderType, BaseModelConfig, 
     HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig
 )

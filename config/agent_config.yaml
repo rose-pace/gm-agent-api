@@ -2,7 +2,7 @@ name: "Game Master Assistant"
 description: "AI assistant for tabletop RPG game masters"
 
 # Default LLM configuration
-model_config:
+configuration:
   default_llm:
     name: "default_model"
     provider: "huggingface"
