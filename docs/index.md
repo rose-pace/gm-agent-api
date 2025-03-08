@@ -1,0 +1,55 @@
+# Project Documentation
+
+## Table of Contents
+
+- app
+    - agents
+        - [gm_assistant](app/agents/gm_assistant.md)
+    - classifiers
+        - [light_embed_classifier](app/classifiers/light_embed_classifier.md)
+    - db
+        - [document_processor](app/db/document_processor.md)
+        - [graph_store](app/db/graph_store.md)
+        - [vector_store](app/db/vector_store.md)
+    - llm
+        - [model_provider](app/llm/model_provider.md)
+    - memory
+        - [cache](app/memory/cache.md)
+        - [config](app/memory/config.md)
+        - [context_memory](app/memory/context_memory.md)
+        - [context_provider](app/memory/context_provider.md)
+        - [memory_context_provider](app/memory/memory_context_provider.md)
+        - [optimizer](app/memory/optimizer.md)
+        - [tracer](app/memory/tracer.md)
+        - [vector_context_provider](app/memory/vector_context_provider.md)
+    - models
+        - [agent_config](app/models/agent_config.md)
+        - [configuration](app/models/configuration.md)
+        - [graph_models](app/models/graph_models.md)
+        - [models](app/models/models.md)
+        - [processor_config](app/models/processor_config.md)
+    - processors
+        - [base_processor](app/processors/base_processor.md)
+        - [document_processor](app/processors/document_processor.md)
+        - [graph_processor](app/processors/graph_processor.md)
+        - [vector_processor](app/processors/vector_processor.md)
+    - schema
+        - [schema_store](app/schema/schema_store.md)
+        - [types](app/schema/types.md)
+        - [validation](app/schema/validation.md)
+    - tools
+        - [graph_query_handler](app/tools/graph_query_handler.md)
+        - [graph_query_tool](app/tools/graph_query_tool.md)
+        - [rag_tools](app/tools/rag_tools.md)
+    - utils
+        - [processor_factory](app/utils/processor_factory.md)
+        - [prompt_generator](app/utils/prompt_generator.md)
+        - [prompt_templates](app/utils/prompt_templates.md)
+        - [prompt_utils](app/utils/prompt_utils.md)
+    - workflows
+        - [base_workflow](app/workflows/base_workflow.md)
+        - [graph_workflow](app/workflows/graph_workflow.md)
+        - [hybrid_workflow](app/workflows/hybrid_workflow.md)
+        - [rag_workflow](app/workflows/rag_workflow.md)
+        - [workflow_manager](app/workflows/workflow_manager.md)
+    - [main](app/main.md)

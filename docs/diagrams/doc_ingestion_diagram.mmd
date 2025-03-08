@@ -1,0 +1,35 @@
+flowchart TD
+    A[Start] --> B[Parse Command Line Arguments]
+    B --> C[Load Configuration]
+    C --> D{Processing Mode?}
+    
+    D -->|vector or both| E[Initialize VectorStore]
+    D -->|graph or both| F[Initialize GraphStore]
+    
+    E --> G[Create VectorProcessor]
+    F --> H[Create GraphProcessor]
+    
+    G --> I[Add to DocumentProcessor]
+    H --> I
+    
+    I --> J[Process Documents from Directory]
+    
+    J --> K[Document Processing]
+    K -->|For each document| L[Read Document]
+    L --> M{Processors}
+    
+    M -->|VectorProcessor| N[Apply Chunking Strategy]
+    N --> O[Process Chunks]
+    O --> P[Store in Vector Database]
+    
+    M -->|GraphProcessor| Q[Extract Entities]
+    Q --> R[Extract Relationships]
+    R --> S[Store in Graph Database]
+    
+    P --> T[Complete Processing]
+    S --> T
+    
+    T --> U{Mode includes graph?}
+    U -->|Yes| V[Save Graph to File]
+    U -->|No| W[End]
+    V --> W

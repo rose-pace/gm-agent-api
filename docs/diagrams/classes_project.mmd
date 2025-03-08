@@ -1,0 +1,662 @@
+classDiagram
+  class AgentConfig {
+    configuration
+    description : Optional[str]
+    name : str
+    workflows : List[WorkflowConfig]
+    get_default_workflow() Optional[WorkflowConfig]
+    get_workflow_by_name(name: str) Optional[WorkflowConfig]
+  }
+  class AllyOfProperties {
+    alliance_type : str
+    benefits : List[str]
+    public : bool
+    reliability : int
+    tensions : List[str]
+    terms : List[str]
+  }
+  class AnthropicModelConfig {
+    api_key : Optional[str]
+    provider : Literal[ModelProviderType.ANTHROPIC]
+    validate_parameters(v)
+  }
+  class AnthropicModelProvider {
+    config
+    generate(prompt: str, system_message: Optional[str], history: Optional[List[Dict[str, str]]]) str
+    get_client() Any
+  }
+  class ArtifactProperties {
+    alignment : str
+    creation_date : Dict[str, str]
+    creator : str
+    current_location : str
+    destruction_method : str
+    game_mechanics : Dict[str, Any]
+    materials : List[str]
+    powers : List[str]
+    previous_owners : List[str]
+    sentience : bool
+  }
+  class AzureOpenAIModelConfig {
+    api_key : Optional[str]
+    api_version : str
+    deployment_name : str
+    endpoint : Optional[str]
+    provider : Literal[ModelProviderType.AZURE_OPENAI]
+    validate_parameters(v)
+  }
+  class AzureOpenAIModelProvider {
+    config
+    generate(prompt: str, system_message: Optional[str], history: Optional[List[Dict[str, str]]]) str
+    get_client() Any
+  }
+  class BaseEntityProperties {
+    campaign_notes : str
+    canonical_id : str
+    creation_date : str
+    description : str
+    image_url : str
+    information_source : str
+    last_updated : str
+    player_knowledge : str
+  }
+  class BaseModelConfig {
+    model : str
+    name : str
+    parameters : Optional[Dict[str, Any]]
+    provider
+  }
+  class BaseProcessor {
+    finalize()* None
+    process_document(content: str, file_path: Path, metadata: Dict[str, Any])* None
+  }
+  class BaseRelationshipProperties {
+    description : str
+    end_date : Dict[str, str]
+    notes : str
+    public_knowledge : bool
+    start_date : Dict[str, str]
+    strength : int
+  }
+  class BaseWorkflow {
+    components : dict
+    model_provider
+    name : str
+    tools : dict
+    execute(query: str, context: Optional[Dict[str, Any]])* WorkflowResult
+  }
+  class CausedProperties {
+    awareness : bool
+    directness : str
+    inevitability : int
+    mechanism : str
+    prevention_attempts : List[str]
+  }
+  class ConceptProperties {
+    applications : List[str]
+    category : str
+    limitations : List[str]
+    origin : str
+    practitioners : List[str]
+    related_concepts : List[str]
+    variations : List[str]
+  }
+  class ConnectedToProperties {
+    access_requirements : List[str]
+    connection_type : str
+    directionality : str
+    stability : int
+    traffic : str
+  }
+  class ContextMemory {
+    cache : NoneType
+    config
+    provider
+    query_optimizer : NoneType
+    tracer : NoneType
+    add_context(content: str, metadata: Dict[str, Any], document_id: Optional[str]) None
+    clear_context(metadata_filter: Optional[Dict[str, Any]]) None
+    get_session_context(query_text: str, session_id: str, top_k: int) List[Any]
+    get_user_context(query_text: str, user_id: str, top_k: int) List[Any]
+    query_context(query_text: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]) List[Any]
+  }
+  class ContextMemoryConfig {
+    cache_ttl_seconds : Optional[int]
+    enable_caching : Optional[bool]
+    enable_query_optimization : Optional[bool]
+    enable_retry : Optional[bool]
+    enable_tracing : Optional[bool]
+    max_cache_size : Optional[int]
+    max_retries : Optional[int]
+    min_results_threshold : Optional[int]
+    trace_log_path : Optional[str]
+  }
+  class ContextProvider {
+    add_context(content: str, metadata: Dict[str, Any], document_id: Optional[str])* None
+    clear_context(metadata_filter: Optional[Dict[str, Any]])* None
+    query_context(query_text: str, top_k: int, metadata_filter: Optional[Dict[str, Any]])* List[Any]
+  }
+  class CreatedProperties {
+    assistance : List[str]
+    materials : List[str]
+    method : str
+    purpose : str
+    timeframe : str
+  }
+  class DeityProperties {
+    alignment : str
+    associated_plane : str
+    clergy_title : str
+    domain : List[str]
+    holy_days : List[str]
+    pantheon : str
+    symbol : str
+  }
+  class DestroyedProperties {
+    aftermath : str
+    method : str
+    reason : str
+    remains : str
+    witnesses : List[str]
+  }
+  class DocumentProcessor {
+    client
+    docs_dir : Path
+    add_chunks_to_db(chunks: List[Dict[str, Any]], file_name: str) None
+    chunk_document(content: str, file_name: str, strategy: str) List[Dict[str, Any]]
+    extract_yaml_blocks(content: str) List[Dict[str, Any]]
+    fixed_size_chunking(content: str, file_name: str) List[Dict[str, Any]]
+    markdown_chunking(content: str, file_name: str) List[Dict[str, Any]]
+    process_document(content: str, file_name: str, chunking_strategy: str) None
+    sliding_window_chunking(content: str, file_name: str) List[Dict[str, Any]]
+    yaml_structure_chunking(content: str, file_name: str) List[Dict[str, Any]]
+  }
+  class EnemyOfProperties {
+    cause : str
+    conflict_type : str
+    confrontations : List[str]
+    intensity : int
+    peace_potential : int
+    status : str
+  }
+  class EraProperties {
+    defining_events : List[str]
+    end_date : Dict[str, str]
+    following_era : str
+    preceding_era : str
+    societal_changes : str
+    start_date : Dict[str, str]
+    technological_level : str
+  }
+  class EventProperties {
+    date : Dict[str, str]
+    duration : str
+    historical_evidence : str
+    outcome : str
+    participants : List[str]
+    significance : str
+    witnesses : List[str]
+  }
+  class FactionProperties {
+    allies : List[str]
+    enemies : List[str]
+    faction_type : str
+    founding_date : Dict[str, str]
+    goals : List[str]
+    headquarters : str
+    hierarchy : str
+    influence : int
+    leader : str
+    members : List[str]
+    reputation : str
+    resources : List[str]
+    symbol : str
+    territory : List[str]
+  }
+  class GMAssistantAgent {
+    campaign_setting : NoneType
+    components_registry : dict
+    game_system : NoneType
+    system_prompt
+    tools_registry : dict
+    workflow_manager
+    process_query(query: str, context: Optional[Dict[str, Any]]) Dict[str, Any]
+  }
+  class GraphProcessor {
+    config
+    entity_map : dict
+    entity_name_variants : dict
+    graph_store
+    schema_store
+    finalize() None
+    process_document(content: str, file_path: Path, metadata: Dict[str, Any]) None
+  }
+  class GraphProcessorConfig {
+    default_entity_type : Optional[str]
+    entity_patterns : Optional[List[EntityExtractionPattern]]
+    extract_entities : Optional[bool]
+    extract_relationships : Optional[bool]
+    relationship_patterns : Optional[List[RelationshipExtractionPattern]]
+    validate_schema : Optional[bool]
+  }
+  class GraphQueryHandler {
+    graph_tool
+    answer_query(query: str) str
+  }
+  class GraphQueryTool {
+    description : str
+    graph_store
+    name : str
+    enrich_rag_results(result: RAGResult) RAGResult
+    find_path_between(start_identifier: str, end_identifier: str, max_depth: int) Optional[List[Dict[str, Any]]]
+    get_entity(identifier: str) Optional[Dict[str, Any]]
+    get_related_entities(identifier: str, relation_type: Optional[str], direction: str) List[Dict[str, Any]]
+    search_entities(property_name: str, property_value: Any, entity_type: Optional[str]) List[Dict[str, Any]]
+  }
+  class GraphStore {
+    edge_type_index : Dict[str, Set[str]], defaultdict
+    edges : Dict[str, GraphEdge], dict
+    incoming_edges : Dict[str, List[str]], defaultdict
+    node_name_index : Dict[str, str], dict
+    node_type_index : Dict[str, Set[str]], defaultdict
+    nodes : Dict[str, GraphNode], dict
+    outgoing_edges : Dict[str, List[str]], defaultdict
+    add_edge(edge: GraphEdge) str
+    add_node(node: GraphNode) str
+    clear() None
+    delete_edge(edge_id: str) bool
+    delete_node(node_id: str) bool
+    find_nodes_by_property(prop_name: str, prop_value: Any) List[GraphNode]
+    find_path(start_node_id: str, end_node_id: str, max_depth: int) Optional[List[Tuple[GraphNode, GraphEdge]]]
+    get_edge(edge_id: str) Optional[GraphEdge]
+    get_node(node_id: str) Optional[GraphNode]
+    get_node_by_name(name: str) Optional[GraphNode]
+    get_nodes_by_type(node_type: str) List[GraphNode]
+    get_related_nodes(node_id: str, edge_type: Optional[str], direction: str) List[Tuple[GraphNode, GraphEdge]]
+    load_from_file(file_path: str) None
+    save_to_file(file_path: str) None
+  }
+  class GraphWorkflow {
+    system_prompt : str
+    execute(query: str, context: Optional[Dict[str, Any]]) WorkflowResult
+  }
+  class HuggingFaceModelConfig {
+    endpoint : Optional[str]
+    provider : Literal[ModelProviderType.HUGGINGFACE]
+    quantization : Optional[str]
+    token : Optional[str]
+    use_local : bool
+    validate_parameters(v)
+  }
+  class HuggingFaceModelProvider {
+    config
+    model
+    tokenizer : PreTrainedTokenizerFast, bool
+    generate(prompt: str, system_message: Optional[str], history: Optional[List[Dict[str, str]]]) str
+    get_client() Any
+  }
+  class HybridWorkflow {
+    system_prompt : str
+    top_k : int
+    execute(query: str, context: Optional[Dict[str, Any]]) WorkflowResult
+  }
+  class LightEmbeddingClassifier {
+    collection_embeddings : list, ndarray
+    collections : list
+    metadata
+    model : SentenceTransformer
+    tag_embeddings : list, ndarray
+    tags : list
+    classify(prompt, threshold, max_results)
+  }
+  class LocatedInProperties {
+    accessibility : str
+    history : str
+    permanence : str
+    position : str
+    visibility : str
+  }
+  class LocationProperties {
+    accessibility : str
+    climate : str
+    coordinates : Dict[str, float]
+    dangers : List[str]
+    government : str
+    location_type : str
+    maps : List[str]
+    points_of_interest : List[str]
+    population : str
+    resources : List[str]
+  }
+  class MemberOfProperties {
+    benefits : List[str]
+    responsibilities : List[str]
+    role : str
+    standing : str
+    term : str
+  }
+  class MemoryContextProvider {
+    context_store : list
+    add_context(content: str, metadata: Dict[str, Any], document_id: Optional[str]) None
+    clear_context(metadata_filter: Optional[Dict[str, Any]]) None
+    query_context(query_text: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]) List[Any]
+  }
+  class ModelConfig {
+    default_llm : Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]
+    models : Optional[List[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]]]
+    get_model_by_name(name: str) Optional[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]]
+  }
+  class ModelProvider {
+    generate(prompt: str, system_message: Optional[str], history: Optional[List[Dict[str, str]]])* str
+    get_client()* Any
+  }
+  class ModelProviderType {
+    name
+  }
+  class MonsterProperties {
+    abilities : List[str]
+    behavior : str
+    challenge_rating : float
+    diet : str
+    encounter_tables : List[str]
+    habitat : List[str]
+    loot : List[str]
+    monster_type : str
+    stats : Dict[str, Any]
+    variants : List[str]
+    weaknesses : List[str]
+  }
+  class NPCProperties {
+    appearance : str
+    class_type : str
+    current_location : str
+    first_appearance : str
+    level : int
+    motivation : str
+    occupation : str
+    personality : str
+    possessions : List[str]
+    quest_giver : bool
+    race : str
+    secrets : List[str]
+    stats : Dict[str, Any]
+  }
+  class OccurredDuringProperties {
+    recorded : bool
+    significance : str
+    timeframe : str
+    typicality : int
+    witnesses : List[str]
+  }
+  class ParentOfProperties {
+    closeness : int
+    influence : str
+    knowledge : bool
+    relationship_type : str
+    responsibilities : str
+  }
+  class PartyMemberProperties {
+    background : str
+    character_sheet : str
+    class_type : str
+    connections : List[Dict[str, str]]
+    favorite_tactics : List[str]
+    goals : List[str]
+    level : int
+    personal_quests : List[str]
+    personality_traits : List[str]
+    player : str
+    race : str
+  }
+  class PlaneProperties {
+    affinity : List[str]
+    entry_points : List[str]
+    hazards : List[str]
+    inhabitants : List[str]
+    parent_plane : str
+    physical_laws : List[str]
+    plane_type : str
+  }
+  class QueryCache {
+    cache : Dict[str, CacheEntry], dict
+    max_size : int
+    ttl_seconds : int
+    clear() None
+    get(query: str, metadata_filter: Optional[Dict[str, Any]]) Optional[List[Any]]
+    set(query: str, results: List[Any], metadata_filter: Optional[Dict[str, Any]]) None
+  }
+  class QueryOptimizer {
+    classify_query(query_text: str) Dict[str, Any]
+    optimize_query(query_text: str, context_data: Optional[Dict[str, Any]]) str
+  }
+  class QuestProperties {
+    difficulty : int
+    follow_up : List[str]
+    hidden_outcome : str
+    location : List[str]
+    objectives : List[str]
+    prerequisites : List[str]
+    quest_giver : str
+    quest_type : str
+    rewards : List[str]
+    status : str
+    time_sensitive : bool
+  }
+  class RAGTool {
+    classifier : NoneType, Optional[LightEmbeddingClassifier]
+    vector_store : Optional[VectorStore]
+    retrieve(query: str, top_k: int, context: str, query_type: str) RAGResult
+  }
+  class RAGWorkflow {
+    system_prompt : str
+    top_k : int
+    execute(query: str, context: Optional[Dict[str, Any]]) WorkflowResult
+  }
+  class RaceProperties {
+    homeland : str
+    language : List[str]
+    lifespan : str
+    origin : str
+    racial_abilities : List[str]
+    subraces : List[str]
+    traits : List[str]
+  }
+  class RulesProperties {
+    authority_type : str
+    enforcement : str
+    laws : List[str]
+    legitimacy : str
+    opposition : List[str]
+  }
+  class SchemaEnforcedGraphStore {
+    graph_store
+    add_entity(name: str, entity_type: str, properties: Dict[str, Any]) str
+    add_relationship(name: str, relationship_type: str, source_id: str, target_id: str, properties: Dict[str, Any]) str
+    clear()
+    delete_edge(edge_id: str)
+    delete_node(node_id: str)
+    find_nodes_by_property(prop_name: str, prop_value: Any)
+    find_path(start_node_id: str, end_node_id: str, max_depth)
+    get_edge(edge_id: str)
+    get_node(node_id: str)
+    get_node_by_name(name: str)
+    get_nodes_by_type(node_type: str)
+    get_related_nodes(node_id: str, edge_type, direction)
+    load_from_file(file_path: str)
+    save_to_file(file_path: str)
+  }
+  class SessionProperties {
+    combat_encounters : List[str]
+    date_played : str
+    future_hooks : List[str]
+    locations_visited : List[str]
+    npcs_encountered : List[str]
+    player_decisions : List[str]
+    plot_revelations : List[str]
+    quests_advanced : List[Dict[str, str]]
+    quests_completed : List[str]
+    session_number : int
+    summary : str
+    treasure_found : List[str]
+  }
+  class ShopProperties {
+    haggling : bool
+    inventory : List[Dict[str, Any]]
+    location : str
+    owner : str
+    prices : str
+    quality : str
+    schedule : str
+    services : List[str]
+    shop_type : str
+    specialty : str
+  }
+  class TracingSystem {
+    logger : NoneType, RootLogger
+    trace_query(query_id: str, query_text: str, metadata_filter: Optional[Dict[str, Any]], extra_info: Optional[Dict[str, Any]]) None
+    trace_results(query_id: str, results: List[Any], duration_ms: float, was_cached: bool, retry_count: int) None
+  }
+  class TransformedIntoProperties {
+    awareness : bool
+    cause : str
+    completeness : int
+    process : str
+    reversibility : bool
+  }
+  class TreasureProperties {
+    curse : str
+    detection : str
+    guardian : str
+    legal_status : str
+    location : str
+    origin : str
+    special_properties : List[str]
+    treasure_type : str
+    value : str
+  }
+  class VectorContextProvider {
+    classifier : NoneType, Optional[LightEmbeddingClassifier]
+    vector_store
+    add_context(content: str, metadata: Dict[str, Any], document_id: Optional[str]) None
+    clear_context(metadata_filter: Optional[Dict[str, Any]]) None
+    query_context(query_text: str, top_k: int, metadata_filter: Optional[Dict[str, Any]]) List[Any]
+  }
+  class VectorProcessor {
+    chunking_strategy : str
+    chunks : list
+    vector_store
+    finalize()* None
+    process_document(content: str, file_path: Path, metadata: Dict[str, Any]) None
+  }
+  class VectorStore {
+    client : Client
+    collection : Collection
+    embedding_function
+    add_documents(documents: list[Document])
+    clear()
+    delete_documents(document_ids: list[str], where: dict)
+    query(query_text: str, metadata_filters: dict, documents_filter: dict, top_k: int)
+  }
+  class VillainProperties {
+    backstory : str
+    base : str
+    escape_plans : List[str]
+    methods : List[str]
+    minions : List[str]
+    motivation : str
+    schemes : List[str]
+    stats : Dict[str, Any]
+    threat_level : int
+    villain_type : str
+    weaknesses : List[str]
+  }
+  class WorkflowConfig {
+    activation : Optional[ActivationConfig]
+    components : Optional[List[str]]
+    description : Optional[str]
+    model : Optional[str]
+    name : str
+    steps : Optional[List[WorkflowStepConfig]]
+    tools : Optional[List[ToolConfig]]
+    type
+  }
+  class WorkflowManager {
+    components : dict
+    config : NoneType
+    tools : dict
+    workflows : Dict[str, BaseWorkflow]
+    process_query(query: str, context: Optional[Dict[str, Any]]) WorkflowResult
+    register_component(name: str, component_instance: Any) None
+    register_tool(name: str, tool_instance: Any) None
+    register_workflow_class(workflow_type: WorkflowType, workflow_class: Type[BaseWorkflow]) None
+    select_workflow(query: str, context: Optional[Dict[str, Any]]) BaseWorkflow
+  }
+  class WorkflowType {
+    name
+  }
+  AnthropicModelProvider --|> ModelProvider
+  AzureOpenAIModelProvider --|> ModelProvider
+  HuggingFaceModelProvider --|> ModelProvider
+  MemoryContextProvider --|> ContextProvider
+  VectorContextProvider --|> ContextProvider
+  AnthropicModelConfig --|> BaseModelConfig
+  AzureOpenAIModelConfig --|> BaseModelConfig
+  HuggingFaceModelConfig --|> BaseModelConfig
+  GraphProcessor --|> BaseProcessor
+  VectorProcessor --|> BaseProcessor
+  AllyOfProperties --|> BaseRelationshipProperties
+  ArtifactProperties --|> BaseEntityProperties
+  CausedProperties --|> BaseRelationshipProperties
+  ConceptProperties --|> BaseEntityProperties
+  ConnectedToProperties --|> BaseRelationshipProperties
+  CreatedProperties --|> BaseRelationshipProperties
+  DeityProperties --|> BaseEntityProperties
+  DestroyedProperties --|> BaseRelationshipProperties
+  EnemyOfProperties --|> BaseRelationshipProperties
+  EraProperties --|> BaseEntityProperties
+  EventProperties --|> BaseEntityProperties
+  FactionProperties --|> BaseEntityProperties
+  LocatedInProperties --|> BaseRelationshipProperties
+  LocationProperties --|> BaseEntityProperties
+  MemberOfProperties --|> BaseRelationshipProperties
+  MonsterProperties --|> BaseEntityProperties
+  NPCProperties --|> BaseEntityProperties
+  OccurredDuringProperties --|> BaseRelationshipProperties
+  ParentOfProperties --|> BaseRelationshipProperties
+  PartyMemberProperties --|> BaseEntityProperties
+  PlaneProperties --|> BaseEntityProperties
+  QuestProperties --|> BaseEntityProperties
+  RaceProperties --|> BaseEntityProperties
+  RulesProperties --|> BaseRelationshipProperties
+  SessionProperties --|> BaseEntityProperties
+  ShopProperties --|> BaseEntityProperties
+  TransformedIntoProperties --|> BaseRelationshipProperties
+  TreasureProperties --|> BaseEntityProperties
+  VillainProperties --|> BaseEntityProperties
+  GraphWorkflow --|> BaseWorkflow
+  HybridWorkflow --|> BaseWorkflow
+  RAGWorkflow --|> BaseWorkflow
+  LightEmbeddingClassifier --* VectorContextProvider : classifier
+  LightEmbeddingClassifier --* RAGTool : classifier
+  VectorStore --* VectorContextProvider : vector_store
+  QueryCache --* ContextMemory : cache
+  ContextMemoryConfig --* ContextMemory : config
+  QueryOptimizer --* ContextMemory : query_optimizer
+  TracingSystem --* ContextMemory : tracer
+  WorkflowType --* WorkflowConfig : type
+  ModelConfig --* AgentConfig : configuration
+  ModelProviderType --* BaseModelConfig : provider
+  GraphProcessorConfig --* GraphProcessor : config
+  SchemaEnforcedGraphStore --* GraphProcessor : schema_store
+  WorkflowManager --* GMAssistantAgent : workflow_manager
+  GraphStore --o GraphProcessor : graph_store
+  GraphStore --o SchemaEnforcedGraphStore : graph_store
+  GraphStore --o GraphQueryTool : graph_store
+  VectorStore --o DocumentProcessor : client
+  VectorStore --o VectorProcessor : vector_store
+  ModelProvider --o BaseWorkflow : model_provider
+  ContextProvider --o ContextMemory : provider
+  AnthropicModelConfig --o AnthropicModelProvider : config
+  AzureOpenAIModelConfig --o AzureOpenAIModelProvider : config
+  HuggingFaceModelConfig --o HuggingFaceModelProvider : config
+  GraphQueryTool --o GraphQueryHandler : graph_tool

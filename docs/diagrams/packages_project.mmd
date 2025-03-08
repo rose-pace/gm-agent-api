@@ -1,0 +1,169 @@
+classDiagram
+  class gm_assistant {
+  }
+  class light_embed_classifier {
+  }
+  class db {
+  }
+  class document_processor {
+  }
+  class graph_store {
+  }
+  class vector_store {
+  }
+  class model_provider {
+  }
+  class main {
+  }
+  class cache {
+  }
+  class config {
+  }
+  class context_memory {
+  }
+  class context_provider {
+  }
+  class memory_context_provider {
+  }
+  class optimizer {
+  }
+  class tracer {
+  }
+  class vector_context_provider {
+  }
+  class models {
+  }
+  class agent_config {
+  }
+  class configuration {
+  }
+  class graph_models {
+  }
+  class models {
+  }
+  class processor_config {
+  }
+  class processors {
+  }
+  class base_processor {
+  }
+  class document_processor {
+  }
+  class graph_processor {
+  }
+  class vector_processor {
+  }
+  class schema_store {
+  }
+  class types {
+  }
+  class validation {
+  }
+  class graph_query_handler {
+  }
+  class graph_query_tool {
+  }
+  class rag_tools {
+  }
+  class processor_factory {
+  }
+  class prompt_generator {
+  }
+  class prompt_templates {
+  }
+  class base_workflow {
+  }
+  class graph_workflow {
+  }
+  class hybrid_workflow {
+  }
+  class rag_workflow {
+  }
+  class workflow_manager {
+  }
+  gm_assistant --> agent_config
+  gm_assistant --> graph_query_handler
+  gm_assistant --> graph_query_tool
+  gm_assistant --> rag_tools
+  gm_assistant --> prompt_generator
+  gm_assistant --> workflow_manager
+  db --> document_processor
+  db --> vector_store
+  document_processor --> db
+  document_processor --> models
+  graph_store --> graph_models
+  vector_store --> models
+  model_provider --> configuration
+  main --> gm_assistant
+  main --> db
+  main --> graph_store
+  main --> models
+  main --> graph_query_tool
+  main --> rag_tools
+  main --> prompt_generator
+  context_memory --> cache
+  context_memory --> config
+  context_memory --> context_provider
+  context_memory --> optimizer
+  context_memory --> tracer
+  memory_context_provider --> context_provider
+  memory_context_provider --> models
+  vector_context_provider --> light_embed_classifier
+  vector_context_provider --> vector_store
+  vector_context_provider --> context_provider
+  vector_context_provider --> models
+  models --> graph_models
+  models --> models
+  agent_config --> configuration
+  processors --> base_processor
+  processors --> document_processor
+  processors --> graph_processor
+  processors --> vector_processor
+  document_processor --> base_processor
+  graph_processor --> graph_store
+  graph_processor --> graph_models
+  graph_processor --> processor_config
+  graph_processor --> base_processor
+  graph_processor --> schema_store
+  graph_processor --> types
+  vector_processor --> db
+  vector_processor --> models
+  vector_processor --> base_processor
+  schema_store --> graph_store
+  schema_store --> graph_models
+  schema_store --> validation
+  validation --> types
+  graph_query_handler --> graph_store
+  graph_query_handler --> graph_query_tool
+  graph_query_tool --> graph_store
+  graph_query_tool --> models
+  graph_query_tool --> graph_models
+  rag_tools --> light_embed_classifier
+  rag_tools --> vector_store
+  rag_tools --> models
+  rag_tools --> prompt_generator
+  processor_factory --> db
+  processor_factory --> graph_store
+  processor_factory --> processor_config
+  processor_factory --> document_processor
+  processor_factory --> graph_processor
+  processor_factory --> vector_processor
+  prompt_generator --> prompt_templates
+  base_workflow --> model_provider
+  graph_workflow --> model_provider
+  graph_workflow --> graph_query_handler
+  graph_workflow --> base_workflow
+  hybrid_workflow --> model_provider
+  hybrid_workflow --> graph_query_tool
+  hybrid_workflow --> rag_tools
+  hybrid_workflow --> base_workflow
+  rag_workflow --> model_provider
+  rag_workflow --> rag_tools
+  rag_workflow --> base_workflow
+  workflow_manager --> model_provider
+  workflow_manager --> agent_config
+  workflow_manager --> configuration
+  workflow_manager --> base_workflow
+  workflow_manager --> graph_workflow
+  workflow_manager --> hybrid_workflow
+  workflow_manager --> rag_workflow

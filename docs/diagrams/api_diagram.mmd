@@ -1,0 +1,22 @@
+flowchart TD
+    User[User] -->|sends prompt| API[API Endpoint]
+    API -->|forwards request| GMAssistant[GMAssistantAgent]
+    
+    GMAssistant -->|calls| ProcessQuery["process_query()"]
+    
+    subgraph "GMAssistantAgent Processing"
+        ProcessQuery -->|validates input| Validation[Input Validation]
+        Validation -->|prepares prompt| PromptPrep[Prompt Preparation]
+        PromptPrep -->|sends to| LLM[Language Model]
+        LLM -->|returns response| ResponseProcess[Response Processing]
+        ResponseProcess -->|formats output| FinalResponse[Final Response]
+    end
+    
+    GMAssistant -->|depends on| Models[Models Package]
+    GMAssistant -->|uses| Config[Configuration]
+    GMAssistant -->|may use| Database[Database Services]
+    
+    FinalResponse -->|returns to| API
+    API -->|delivers response| User
+    
+    class GMAssistant,ProcessQuery highlight
