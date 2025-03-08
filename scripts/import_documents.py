@@ -5,7 +5,7 @@ Imports documents into both vector store and graph database.
 """
 import sys
 import logging
-import argparse
+import click
 import json
 import yaml
 import os
@@ -29,37 +29,6 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-
-def parse_args():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Import documents into vector and graph databases")
-    
-    # Get defaults from environment variables
-    default_docs_dir = os.getenv('DOCUMENTS_DIR', 'documents')
-    default_vector_dir = os.getenv('VECTOR_DIR', './data/vector_db')
-    default_graph_path = os.getenv('GRAPH_PATH', './data/graph.json')
-    default_chunking = os.getenv('CHUNKING_STRATEGY', 'markdown')
-    default_config_path = os.getenv('CONFIG_PATH', None)
-    default_mode = os.getenv('PROCESSOR_MODE', 'both')
-    
-    parser.add_argument("--docs_dir", default=default_docs_dir, 
-                        help=f"Directory containing documents (default: {default_docs_dir})")
-    parser.add_argument("--vector_dir", default=default_vector_dir, 
-                        help=f"Vector database directory (default: {default_vector_dir})")
-    parser.add_argument("--graph_path", default=default_graph_path, 
-                        help=f"Path to save graph database (default: {default_graph_path})")
-    parser.add_argument("--config", default=default_config_path,
-                        help="Path to configuration file (JSON or YAML)")
-    parser.add_argument("--chunking", default=default_chunking, 
-                        choices=["markdown", "fixed", "yaml", "sliding"], 
-                        help=f"Document chunking strategy (default: {default_chunking})")
-    parser.add_argument("--mode", default=default_mode,
-                        choices=["vector", "graph", "both"],
-                        help=f"Which processors to run (default: {default_mode})")
-    parser.add_argument("-a", "--append", action="store_true", 
-                        help="Append to existing databases")
-    return parser.parse_args()
 
 
 def load_config(config_path: str) -> Optional[ProcessorRegistry]:
@@ -97,30 +66,57 @@ def load_config(config_path: str) -> Optional[ProcessorRegistry]:
         return None
 
 
-def main():
-    """Main entry point"""
-    args = parse_args()
+@click.command()
+@click.option('--docs_dir', 
+              default=os.getenv('DOCUMENTS_DIR', 'documents'),
+              help='Directory containing documents')
+@click.option('--vector_dir', 
+              default=os.getenv('VECTOR_DIR', './data/vector_db'),
+              help='Vector database directory')
+@click.option('--graph_path', 
+              default=os.getenv('GRAPH_PATH', './data/graph.json'),
+              help='Path to save graph database')
+@click.option('--config',
+              default=os.getenv('CONFIG_PATH'),
+              help='Path to configuration file (JSON or YAML)')
+@click.option('--chunking', 
+              default=os.getenv('CHUNKING_STRATEGY', 'markdown'),
+              type=click.Choice(['markdown', 'fixed', 'yaml', 'sliding']),
+              help='Document chunking strategy')
+@click.option('--mode',
+              default=os.getenv('PROCESSOR_MODE', 'both'),
+              type=click.Choice(['vector', 'graph', 'both']),
+              help='Which processors to run')
+@click.option('--append', '-a', 
+              is_flag=True, 
+              help='Append to existing databases')
+def main(docs_dir: str, vector_dir: str, graph_path: str, config: Optional[str], 
+         chunking: str, mode: str, append: bool) -> None:
+    """
+    Main entry point for document import script.
     
+    Imports documents into vector store and/or graph database based on options.
+    """
     # Load configuration if specified
-    config = load_config(args.config) if args.config else None
+    config_obj = load_config(config) if config else None
     
     # Initialize the document processor coordinator
     doc_processor = DocumentProcessor()
     
     # Add vector store processor if requested
-    if args.mode in ["vector", "both"]:
+    if mode in ['vector', 'both']:
         vector_store = VectorStore(
             collection_name='campaign_notes',
-            persist_directory=args.vector_dir
+            persist_directory=vector_dir
         )
         
-        if not args.append:
+        if not append:
             logger.info('Clearing existing documents from the vector store')
             vector_store.clear()
         
         # Use config if available, otherwise use command line args
-        vector_config = config.vector_processor if config else None
-        chunking_strategy = vector_config.chunking_strategy.value if vector_config else args.chunking
+        vector_config = config_obj.vector_processor if config_obj else None
+        chunking_strategy = vector_config.chunking_strategy.value if vector_config else chunking
         
         vector_processor = VectorProcessor(
             vector_store=vector_store,
@@ -130,17 +126,17 @@ def main():
         logger.info(f'Added vector processor with {chunking_strategy} chunking strategy')
     
     # Add graph processor if requested
-    if args.mode in ["graph", "both"]:
+    if mode in ['graph', 'both']:
         # Initialize graph store
         graph_store = GraphStore()
         
         # Load existing graph if in append mode
-        if args.append and Path(args.graph_path).exists():
-            logger.info(f'Loading existing graph from {args.graph_path}')
-            graph_store.load_from_file(args.graph_path)
+        if append and Path(graph_path).exists():
+            logger.info(f'Loading existing graph from {graph_path}')
+            graph_store.load_from_file(graph_path)
         
         # Use config if available
-        graph_config = config.graph_processor if config else None
+        graph_config = config_obj.graph_processor if config_obj else None
         
         graph_processor = GraphProcessor(
             graph_store=graph_store,
@@ -150,13 +146,13 @@ def main():
         logger.info('Added graph processor')
     
     # Process all documents
-    logger.info(f'Processing documents from {args.docs_dir}')
-    doc_processor.process_documents(args.docs_dir)
+    logger.info(f'Processing documents from {docs_dir}')
+    doc_processor.process_documents(docs_dir)
     
     # Save graph if we processed it
-    if args.mode in ["graph", "both"]:
-        logger.info(f'Saving graph to {args.graph_path}')
-        graph_store.save_to_file(args.graph_path)
+    if mode in ['graph', 'both']:
+        logger.info(f'Saving graph to {graph_path}')
+        graph_store.save_to_file(graph_path)
         
         # Print summary of graph data
         entity_count = len(graph_store.nodes)
