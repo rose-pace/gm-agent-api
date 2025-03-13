@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 
 from app.models.configuration import (
     ModelProviderType, BaseModelConfig, 
-    HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig
+    HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig,
+    GitHubOpenAIModelConfig, AzureAIInferenceModelConfig
 )
 
 # Configure logging
@@ -364,11 +365,185 @@ class AnthropicModelProvider(ModelProvider):
         return self._client
 
 
+class GitHubOpenAIModelProvider(ModelProvider):
+    """Model provider for GitHub models through OpenAI interface"""
+    
+    def __init__(self, config: GitHubOpenAIModelConfig):
+        """
+        Initialize the GitHub OpenAI model provider
+        
+        Args:
+            config: Configuration for the model
+        """
+        self.config = config
+        
+        try:
+            from openai import AsyncOpenAI
+            
+            # Get API key from config or environment
+            api_key = config.api_key or os.environ.get('GITHUB_TOKEN')
+            if not api_key:
+                raise ValueError('GitHub API token not provided in config or environment (GITHUB_TOKEN)')
+            
+            # Initialize the client
+            self._client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=config.endpoint
+            )
+            
+            logger.info(f'Initialized GitHub OpenAI client for model: {config.model}')
+            
+        except ImportError as e:
+            logger.error(f'Failed to import required packages: {e}', exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f'Error initializing GitHub OpenAI client: {e}', exc_info=True)
+            raise
+    
+    async def generate(self, prompt: str, system_message: Optional[str] = None, 
+                     history: Optional[List[Dict[str, str]]] = None) -> str:
+        """
+        Generate a response using the GitHub OpenAI model
+        
+        Args:
+            prompt: User prompt to send to the model
+            system_message: Optional system message for context
+            history: Optional conversation history
+            
+        Returns:
+            Generated text response from the model
+        """
+        try:
+            # Format messages
+            messages = []
+            if system_message:
+                messages.append({'role': 'system', 'content': system_message})
+            
+            # Add history if provided
+            if history:
+                messages.extend(history)
+            
+            # Add current prompt
+            messages.append({'role': 'user', 'content': prompt})
+            
+            # Get response
+            response = await self._client.chat.completions.create(
+                model=self.config.model,
+                messages=messages,
+                **self.config.parameters
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            logger.error(f'Error generating text with GitHub OpenAI model: {e}', exc_info=True)
+            return f'Error generating response: {str(e)}'
+    
+    def get_client(self) -> Any:
+        """Get the underlying client"""
+        return self._client
+
+
+class AzureAIInferenceModelProvider(ModelProvider):
+    """Model provider for Azure AI Inference API"""
+    
+    def __init__(self, config: AzureAIInferenceModelConfig):
+        """
+        Initialize the Azure AI Inference model provider
+        
+        Args:
+            config: Configuration for the model
+        """
+        self.config = config
+        
+        try:
+            from azure.ai.inference import InferenceClient
+            from azure.core.credentials import AzureKeyCredential
+            
+            # Get API key from config or environment
+            api_key = config.api_key or os.environ.get('AZURE_AI_INFERENCE_API_KEY') or os.environ.get('GITHUB_TOKEN')
+            if not api_key:
+                raise ValueError('Azure AI Inference API key not provided in config or environment (AZURE_AI_INFERENCE_API_KEY) or (GITHUB_TOKEN)')
+            
+            # Initialize the client
+            self._client = InferenceClient(
+                endpoint=config.endpoint,
+                credential=AzureKeyCredential(api_key)
+            )
+            
+            logger.info(f'Initialized Azure AI Inference client for model: {config.model}')
+            
+        except ImportError as e:
+            logger.error(f'Failed to import required packages: {e}', exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f'Error initializing Azure AI Inference client: {e}', exc_info=True)
+            raise
+    
+    async def generate(self, prompt: str, system_message: Optional[str] = None, 
+                     history: Optional[List[Dict[str, str]]] = None) -> str:
+        """
+        Generate a response using the Azure AI Inference model
+        
+        Args:
+            prompt: User prompt to send to the model
+            system_message: Optional system message for context
+            history: Optional conversation history
+            
+        Returns:
+            Generated text response from the model
+        """
+        try:
+            # Format messages
+            messages = []
+            if system_message:
+                messages.append({'role': 'system', 'content': system_message})
+            
+            # Add history if provided
+            if history:
+                messages.extend(history)
+            
+            # Add current prompt
+            messages.append({'role': 'user', 'content': prompt})
+            
+            # Prepare parameters based on configuration
+            params = {
+                'temperature': self.config.parameters.get('temperature', 0.7),
+                'max_tokens': self.config.parameters.get('max_tokens', 1000),
+                'top_p': self.config.parameters.get('top_p', 0.95),
+            }
+            
+            # Include other parameters from config
+            for key, value in self.config.parameters.items():
+                if key not in params:
+                    params[key] = value
+            
+            # Get response using the deployment name if specified, otherwise use model
+            model_name = self.config.deployment_name or self.config.model
+            
+            response = await self._client.chat_completions.create_async(
+                model=model_name,
+                messages=messages,
+                **params
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            logger.error(f'Error generating text with Azure AI Inference model: {e}', exc_info=True)
+            return f'Error generating response: {str(e)}'
+    
+    def get_client(self) -> Any:
+        """Get the underlying client"""
+        return self._client
+
+
 class ModelProviderFactory:
     """Factory for creating model providers"""
     
     @staticmethod
-    def create_provider(config: Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]) -> ModelProvider:
+    def create_provider(config: Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, 
+                               GitHubOpenAIModelConfig, AzureAIInferenceModelConfig]) -> ModelProvider:
         """
         Create a model provider based on the configuration
         
@@ -387,5 +562,9 @@ class ModelProviderFactory:
             return AzureOpenAIModelProvider(config)
         elif config.provider == ModelProviderType.ANTHROPIC:
             return AnthropicModelProvider(config)
+        elif config.provider == ModelProviderType.GITHUB_OPENAI:
+            return GitHubOpenAIModelProvider(config)
+        elif config.provider == ModelProviderType.AZURE_AI_INFERENCE:
+            return AzureAIInferenceModelProvider(config)
         else:
             raise ValueError(f"Unsupported model provider: {config.provider}")

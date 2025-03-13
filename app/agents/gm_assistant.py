@@ -58,7 +58,7 @@ class GMAssistantAgent:
         
         # Default config path if none provided
         if not config_path:
-            config_path = os.environ.get('AGENT_CONFIG_PATH', './configs/agent_config.yaml')
+            config_path = os.environ.get('AGENT_CONFIG_PATH', './configs/agent_config.json')
         
         # Create or load workflow manager
         self.workflow_manager = self._initialize_workflow_manager(config_path)
