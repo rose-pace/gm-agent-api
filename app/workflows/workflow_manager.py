@@ -43,7 +43,7 @@ class WorkflowManager:
         self.components = components or {}
         self._workflow_classes: Dict[WorkflowType, Type[BaseWorkflow]] = {
             WorkflowType.RAG: RAGWorkflow,
-            WorkflowType.GRAPH: GraphWorkflow,
+            # WorkflowType.GRAPH: GraphWorkflow,
             WorkflowType.HYBRID: HybridWorkflow,
         }
         

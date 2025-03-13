@@ -170,3 +170,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Documents and datasets
+documents/
+data/

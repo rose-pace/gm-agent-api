@@ -1,0 +1,80 @@
+{
+  "name": "Game Master Assistant",
+  "description": "AI assistant for tabletop RPG game masters",
+  "configuration": {
+    "default_llm": {
+      "name": "default_model",
+      "provider": "huggingface",
+      "model": "Qwen/Qwen2.5-Coder-32B-Instruct",
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 1024
+      }
+    },
+    "models": []
+  },
+  "workflows": [
+    {
+      "name": "rag_workflow",
+      "description": "Standard RAG workflow for general questions",
+      "type": "rag",
+      "activation": {
+        "keywords": [
+          "what",
+          "who",
+          "how",
+          "when",
+          "where",
+          "why"
+        ],
+        "priority": 1,
+        "default": false
+      },
+      "tools": [
+        {
+          "name": "rag_tool",
+          "parameters": {}
+        }
+      ]
+    },
+    {
+      "name": "graph_workflow",
+      "description": "Graph query workflow for relationship questions",
+      "type": "graph",
+      "activation": {
+        "keywords": [
+          "related",
+          "connection",
+          "relationship",
+          "between",
+          "linked"
+        ],
+        "priority": 2,
+        "default": false
+      },
+      "components": [
+        "graph_query_handler"
+      ]
+    },
+    {
+      "name": "hybrid_workflow",
+      "description": "Hybrid workflow combining RAG and graph queries",
+      "type": "hybrid",
+      "activation": {
+        "keywords": [],
+        "priority": 0,
+        "default": true
+      },
+      "tools": [
+        {
+          "name": "rag_tool",
+          "parameters": {}
+        },
+        {
+          "name": "graph_query_tool",
+          "parameters": {}
+        }
+      ]
+    }
+  ]
+}

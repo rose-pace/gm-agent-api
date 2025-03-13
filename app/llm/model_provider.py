@@ -66,7 +66,7 @@ class HuggingFaceModelProvider(ModelProvider):
                 
                 # Set token if provided
                 if config.token:
-                    os.environ["HUGGINGFACE_TOKEN"] = config.token
+                    os.environ["HUGGINGFACEHUB_API_TOKEN"] = config.token
                 
                 # Configure quantization if specified
                 if config.quantization == '4bit':
@@ -86,10 +86,10 @@ class HuggingFaceModelProvider(ModelProvider):
                 logger.info(f'Loaded local model: {config.model}')
                 
             except ImportError as e:
-                logger.error(f'Failed to import required packages for local model: {e}')
+                logger.error(f'Failed to import required packages for local model: {e}', exc_info=True)
                 raise
             except Exception as e:
-                logger.error(f'Error loading local model {config.model}: {e}')
+                logger.error(f'Error loading local model {config.model}: {e}', exc_info=True)
                 raise
         else:
             # Use the Hugging Face API
@@ -97,20 +97,21 @@ class HuggingFaceModelProvider(ModelProvider):
                 from huggingface_hub import InferenceClient
                 
                 # Configure API token
-                token = config.token or os.environ.get("HUGGINGFACE_TOKEN")
+                token = config.token or os.environ.get("HUGGINGFACEHUB_API_TOKEN")
                 
                 # Set up the API client
                 self._client = InferenceClient(
+                    provider="hf-inference",
                     model=config.endpoint or config.model,
                     token=token
                 )
                 logger.info(f'Initialized Hugging Face API client for model: {config.model}')
                 
             except ImportError as e:
-                logger.error(f'Failed to import required packages: {e}')
+                logger.error(f'Failed to import required packages: {e}', exc_info=True)
                 raise
             except Exception as e:
-                logger.error(f'Error initializing Hugging Face client: {e}')
+                logger.error(f'Error initializing Hugging Face client: {e}', exc_info=True)
                 raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
@@ -181,7 +182,7 @@ class HuggingFaceModelProvider(ModelProvider):
                 return assistant_response
                 
         except Exception as e:
-            logger.error(f'Error generating text with Hugging Face model: {e}')
+            logger.error(f'Error generating text with Hugging Face model: {e}', exc_info=True)
             return f"Error generating response: {str(e)}"
     
     def get_client(self) -> Any:
@@ -224,10 +225,10 @@ class AzureOpenAIModelProvider(ModelProvider):
             logger.info(f'Initialized Azure OpenAI client for model: {config.model} (deployment: {config.deployment_name})')
             
         except ImportError as e:
-            logger.error(f'Failed to import required packages: {e}')
+            logger.error(f'Failed to import required packages: {e}', exc_info=True)
             raise
         except Exception as e:
-            logger.error(f'Error initializing Azure OpenAI client: {e}')
+            logger.error(f'Error initializing Azure OpenAI client: {e}', exc_info=True)
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
@@ -266,7 +267,7 @@ class AzureOpenAIModelProvider(ModelProvider):
             return response.choices[0].message.content
             
         except Exception as e:
-            logger.error(f'Error generating text with Azure OpenAI model: {e}')
+            logger.error(f'Error generating text with Azure OpenAI model: {e}', exc_info=True)
             return f"Error generating response: {str(e)}"
     
     def get_client(self) -> Any:
@@ -300,10 +301,10 @@ class AnthropicModelProvider(ModelProvider):
             logger.info(f'Initialized Anthropic client for model: {config.model}')
             
         except ImportError as e:
-            logger.error(f'Failed to import required packages: {e}')
+            logger.error(f'Failed to import required packages: {e}', exc_info=True)
             raise
         except Exception as e:
-            logger.error(f'Error initializing Anthropic client: {e}')
+            logger.error(f'Error initializing Anthropic client: {e}', exc_info=True)
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
@@ -355,7 +356,7 @@ class AnthropicModelProvider(ModelProvider):
             return response.content[0].text
             
         except Exception as e:
-            logger.error(f'Error generating text with Anthropic model: {e}')
+            logger.error(f'Error generating text with Anthropic model: {e}', exc_info=True)
             return f"Error generating response: {str(e)}"
     
     def get_client(self) -> Any:

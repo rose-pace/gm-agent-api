@@ -22,6 +22,7 @@ class RAGTool:
             metadata_path: Path to metadata JSON file for classifier initialization
         """
         self.vector_store = vector_store
+        self.name = 'rag_tool'
         self.classifier = classifier
         if not self.classifier:
             try:
@@ -65,7 +66,7 @@ class RAGTool:
                     metadata_filter['Tags'] = classification['tags'][0]
         
         # Retrieve relevant documents with metadata filtering
-        results = await self.vector_store.query(search_query, top_k=top_k, where=metadata_filter)
+        results = await self.vector_store.query(search_query, top_k=top_k, metadata_filters=metadata_filter)
         
         # If no results with metadata filter, retry without filter
         if not results and metadata_filter:

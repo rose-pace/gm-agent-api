@@ -8,9 +8,15 @@ import click
 import json
 import yaml
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
+
+# Add the project root to sys.path before importing app modules
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from app.db import VectorStore
 from app.db.graph_store import GraphStore
@@ -46,7 +52,7 @@ def load_config(config_path: str) -> Optional[ProcessorRegistry]:
     try:
         path = Path(config_path)
         if not path.exists():
-            logger.error(f"Configuration file not found: {config_path}")
+            logger.error(f"Configuration file not found: {config_path}", exc_info=True)
             return None
         
         with open(path, 'r', encoding='utf-8') as f:
@@ -55,13 +61,13 @@ def load_config(config_path: str) -> Optional[ProcessorRegistry]:
             elif path.suffix.lower() in ['.yaml', '.yml']:
                 config_data = yaml.safe_load(f)
             else:
-                logger.error(f"Unsupported configuration format: {path.suffix}")
+                logger.error(f"Unsupported configuration format: {path.suffix}", exc_info=True)
                 return None
         
         return ProcessorRegistry.model_validate(config_data)
         
     except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
+        logger.error(f"Error loading configuration: {e}", exc_info=True)
         return None
 
 

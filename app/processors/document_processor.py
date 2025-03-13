@@ -61,7 +61,7 @@ class DocumentProcessor:
                     processor.process_document(content, doc_path)
                 
             except Exception as e:
-                logger.error(f'Error processing {doc_path}: {e}')
+                logger.error(f'Error processing {doc_path}: {e}', exc_info=True)
         
         # Let each processor perform any final operations
         for processor in self.processors:
@@ -98,5 +98,5 @@ class DocumentProcessor:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return f.read()
         except Exception as e:
-            logger.error(f'Error reading file {file_path}: {e}')
+            logger.error(f'Error reading file {file_path}: {e}', exc_info=True)
             return None
