@@ -88,15 +88,14 @@ class GMAssistantAgent:
             Initialized workflow manager
             
         Raises:
-            FileNotFoundError: If config file doesn't exist and couldn't be created
+            FileNotFoundError: If config file doesn't exist
         """
         # Check if config exists
         path = Path(config_path)
         
         if not path.exists():
-            # Create default config if it doesn't exist
-            logger.info(f"Configuration file not found at {config_path}, creating default")
-            self._create_default_config(config_path)
+            # Raise exception if config doesn't exist
+            raise FileNotFoundError(f"Configuration file not found at {config_path}")
         
         try:
             # Create workflow manager with existing tools and components
@@ -110,102 +109,6 @@ class GMAssistantAgent:
         except Exception as e:
             logger.error(f"Error initializing workflow manager: {e}", exc_info=True)
             raise
-    
-    def _create_default_config(self, config_path: str) -> None:
-        """
-        Create a default configuration file
-        
-        Args:
-            config_path: Path where to create the configuration
-        """
-        # Create directories if they don't exist
-        path = Path(config_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Determine available tools and components
-        tools = []
-        if 'rag_tool' in self.tools_registry:
-            tools.append({'name': 'rag_tool', 'parameters': {'top_k': 3}})
-        
-        if 'graph_query_tool' in self.tools_registry:
-            tools.append({'name': 'graph_query_tool', 'parameters': {}})
-        
-        components = []
-        if 'graph_query_handler' in self.components_registry:
-            components.append('graph_query_handler')
-        
-        # Create default config structure
-        default_config = {
-            'name': 'Game Master Assistant',
-            'description': 'AI assistant for tabletop RPG game masters',
-            'configuration': {
-                'default_llm': {
-                    'name': 'default_model',
-                    'provider': 'huggingface',
-                    'model': 'mistralai/Mistral-7B-Instruct-v0.2',
-                    'parameters': {
-                        'temperature': 0.7,
-                        'max_length': 1024,
-                    }
-                },
-                'models': []
-            },
-            'workflows': [
-                {
-                    'name': 'rag_workflow',
-                    'description': 'Standard RAG workflow for general questions',
-                    'type': 'rag',
-                    'activation': {
-                        'keywords': ['what', 'who', 'how', 'when', 'where', 'why'],
-                        'priority': 1,
-                        'default': False,
-                    },
-                    'tools': [{'name': 'rag_tool', 'parameters': {'top_k': 3}}] if 'rag_tool' in self.tools_registry else []
-                }
-            ]
-        }
-        
-        # Add graph workflow if graph components are available
-        if 'graph_query_tool' in self.tools_registry and 'graph_query_handler' in self.components_registry:
-            default_config['workflows'].append({
-                'name': 'graph_workflow',
-                'description': 'Graph query workflow for relationship questions',
-                'type': 'graph',
-                'activation': {
-                    'keywords': ['related', 'connection', 'relationship', 'between', 'linked'],
-                    'priority': 2,
-                    'default': False,
-                },
-                'components': ['graph_query_handler']
-            })
-            
-            # Add hybrid workflow
-            default_config['workflows'].append({
-                'name': 'hybrid_workflow',
-                'description': 'Hybrid workflow combining RAG and graph queries',
-                'type': 'hybrid',
-                'activation': {
-                    'keywords': [],
-                    'priority': 0,
-                    'default': True,
-                },
-                'tools': [
-                    {'name': 'rag_tool', 'parameters': {'top_k': 3}}
-                    if 'rag_tool' in self.tools_registry else {},
-                    {'name': 'graph_query_tool', 'parameters': {}}
-                    if 'graph_query_tool' in self.tools_registry else {}
-                ]
-            })
-        
-        # Write configuration to file
-        with open(path, 'w', encoding='utf-8') as f:
-            if path.suffix.lower() == '.json':
-                import json
-                json.dump(default_config, f, indent=2)
-            else:
-                yaml.dump(default_config, f, default_flow_style=False, sort_keys=False)
-        
-        logger.info(f"Created default configuration at {config_path}")
     
     async def process_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

@@ -2,16 +2,49 @@
   "name": "Game Master Assistant",
   "description": "AI assistant for tabletop RPG game masters",
   "configuration": {
-    "default_llm": {
-      "name": "default_model",
-      "provider": "huggingface",
-      "model": "Qwen/Qwen2.5-Coder-32B-Instruct",
-      "parameters": {
-        "temperature": 0.7,
-        "max_tokens": 1024
+    "default_llm": "phi4_default",
+    "models": [
+      {
+        "name": "phi4_default",
+        "provider": "github_openai",
+        "model": "Phi-4-mini-instruct",
+        "endpoint": "https://models.inference.ai.azure.com",
+        "parameters": {
+          "temperature": 0.7,
+          "max_tokens": 1024
+        }
+      },
+      {
+        "name": "azure_gpt4",
+        "provider": "azure_openai",
+        "model": "gpt-4",
+        "deployment_name": "gpt4",
+        "api_version": "2023-05-15",
+        "parameters": {
+          "temperature": 0.7,
+          "max_tokens": 800
+        }
+      },
+      {
+        "name": "hf_mistral",
+        "provider": "huggingface",
+        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+        "use_local": false,
+        "parameters": {
+          "temperature": 0.7,
+          "max_tokens": 1024
+        }
+      },
+      {
+        "name": "claude_opus",
+        "provider": "anthropic",
+        "model": "claude-3-opus-20240229",
+        "parameters": {
+          "temperature": 0.7,
+          "max_tokens_to_sample": 1000
+        }
       }
-    },
-    "models": []
+    ]
   },
   "workflows": [
     {

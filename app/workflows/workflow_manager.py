@@ -103,9 +103,9 @@ class WorkflowManager:
                     configuration = self.config.configuration.get_model_by_name(workflow_config.model)
                     if not configuration:
                         logger.warning(f"Model {workflow_config.model} not found, using default")
-                        configuration = self.config.configuration.default_llm
+                        configuration = self.config.configuration.get_default_model()
                 else:
-                    configuration = self.config.configuration.default_llm
+                    configuration = self.config.configuration.get_default_model()
                 
                 # Create the model provider
                 model_provider = ModelProviderFactory.create_provider(configuration)

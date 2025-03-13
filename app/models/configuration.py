@@ -12,6 +12,7 @@ class ModelProviderType(str, Enum):
     HUGGINGFACE = 'huggingface'
     AZURE_OPENAI = 'azure_openai'
     ANTHROPIC = 'anthropic'
+    GITHUB_OPENAI = 'github_openai'
 
 
 class BaseModelConfig(BaseModel):
@@ -91,14 +92,47 @@ class AnthropicModelConfig(BaseModelConfig):
         return v
 
 
+class GitHubOpenAIModelConfig(BaseModelConfig):
+    """Configuration for GitHub models through OpenAI framework"""
+    provider: Literal[ModelProviderType.GITHUB_OPENAI] = ModelProviderType.GITHUB_OPENAI
+    endpoint: str = 'https://models.inference.ai.azure.com'  # Default endpoint for GitHub models
+    api_key: Optional[str] = None  # Will be loaded from GITHUB_TOKEN env if not provided
+    
+    @field_validator('parameters')
+    def validate_parameters(cls, v):
+        """Ensure required parameters have defaults if not provided"""
+        defaults = {
+            'temperature': 0.7,
+            'max_tokens': 1000,
+            'top_p': 0.95,
+        }
+        
+        for key, value in defaults.items():
+            if key not in v:
+                v[key] = value
+        
+        return v
+
+
 class ModelConfig(BaseModel):
     """Combined model configuration"""
-    default_llm: Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]
-    models: List[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]] = Field(default_factory=list)
+    default_llm: Union[str, HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, GitHubOpenAIModelConfig]
+    models: List[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, GitHubOpenAIModelConfig]] = Field(default_factory=list)
 
-    def get_model_by_name(self, name: str) -> Optional[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig]]:
+    def get_model_by_name(self, name: str) -> Optional[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, GitHubOpenAIModelConfig]]:
         """Get a model configuration by name"""
         for model in self.models:
             if model.name == name:
                 return model
         return None
+    
+    def get_default_model(self) -> Optional[Union[HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, GitHubOpenAIModelConfig]]:
+        """
+        Get the default model configuration.
+        
+        Returns:
+            The default model configuration object
+        """
+        if isinstance(self.default_llm, str):
+            return self.get_model_by_name(self.default_llm)
+        return self.default_llm
