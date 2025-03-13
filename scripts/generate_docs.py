@@ -227,7 +227,7 @@ def generate_module_docs(module_path: str, source_file: Path) -> str:
         return '\n'.join(content)
         
     except Exception as e:
-        logger.error(f'Failed to generate documentation for {module_path}: {str(e)}')
+        logger.error(f'Failed to generate documentation for {module_path}: {str(e)}', exc_info=True)
         return ''
 
 #################################################
@@ -334,7 +334,7 @@ def generate_project_diagram(app_root: str, output_dir: str) -> str:
         )
         
         if result.returncode != 0:
-            logger.error(f'pyreverse failed: {result.stderr}')
+            logger.error(f'pyreverse failed: {result.stderr}', exc_info=True)
             return None
         
         # Get the manually made api diagram to add to the documentation as well
@@ -363,7 +363,7 @@ def generate_project_diagram(app_root: str, output_dir: str) -> str:
 '''
         return diagram
     except Exception as e:
-        logger.error(f'Error generating project diagram: {str(e)}')
+        logger.error(f'Error generating project diagram: {str(e)}', exc_info=True)
         return ''
 
 #################################################
@@ -452,7 +452,7 @@ def generate_table_of_contents(module_tree: Dict[str, Any]) -> str:
         
         return '\n'.join(toc_lines)
     except Exception as e:
-        logger.error(f'Error generating table of contents: {str(e)}')
+        logger.error(f'Error generating table of contents: {str(e)}', exc_info=True)
         return ''
 
 #################################################
@@ -555,7 +555,7 @@ def generate_mkdocs_config(output_dir: str, module_tree: Dict[str, Any]) -> str:
         return str(config_file)
         
     except Exception as e:
-        logger.error(f'Failed to generate MkDocs config: {e}')
+        logger.error(f'Failed to generate MkDocs config: {e}', exc_info=True)
         return ''
 
 def build_navigation_structure(module_tree: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -665,7 +665,7 @@ def main(start_path: str, output_dir: str, verbose: bool, project_root: str) -> 
     # Check dependencies
     missing_deps = check_dependencies()
     if missing_deps:
-        logger.error(f'{Fore.RED}Missing dependencies: {", ".join(missing_deps)}')
+        logger.error(f'{Fore.RED}Missing dependencies: {", ".join(missing_deps)}', exc_info=True)
         logger.info('Install them using: pip install ' + ' '.join(missing_deps))
         return
     
@@ -679,7 +679,7 @@ def main(start_path: str, output_dir: str, verbose: bool, project_root: str) -> 
     logger.info(f'Found {len(python_files)} Python files')
     
     if not python_files:
-        logger.error(f'{Fore.RED}No Python files found. Exiting.')
+        logger.error(f'{Fore.RED}No Python files found. Exiting.', exc_info=True)
         return
     
     # If project_root not specified, detect it
@@ -830,5 +830,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        logger.error(f'{Fore.RED}An unexpected error occurred: {str(e)}')
+        logger.error(f'{Fore.RED}An unexpected error occurred: {str(e)}', exc_info=True)
         sys.exit(1)

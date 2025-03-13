@@ -163,7 +163,7 @@ class GraphProcessor(BaseProcessor):
                 self._extract_entities_from_yaml(data, source_file)
                 
             except yaml.YAMLError as e:
-                logger.error(f"Error parsing YAML in {source_file}: {e}")
+                logger.error(f"Error parsing YAML in {source_file}: {e}", exc_info=True)
         
         # Process text content using regex patterns
         for pattern in self.config.entity_patterns:
@@ -267,7 +267,7 @@ class GraphProcessor(BaseProcessor):
                             properties=properties
                         )
                     except ValueError as e:
-                        logger.error(f"Error creating relationship: {e}")
+                        logger.error(f"Error creating relationship: {e}", exc_info=True)
     
     def _get_entity_id(self, entity_name: str) -> Optional[str]:
         """
@@ -302,5 +302,5 @@ class GraphProcessor(BaseProcessor):
             self.entity_map[entity_name] = entity_id
             return entity_id
         except ValueError as e:
-            logger.error(f"Error creating entity {entity_name}: {e}")
+            logger.error(f"Error creating entity {entity_name}: {e}", exc_info=True)
             return None

@@ -83,7 +83,7 @@ class GraphWorkflow(BaseWorkflow):
             )
             
         except Exception as e:
-            logger.error(f'Error executing Graph workflow: {e}')
+            logger.error(f'Error executing Graph workflow: {e}', exc_info=True)
             return WorkflowResult(
                 answer=f"I'm sorry, I encountered an error while processing your graph query: {str(e)}",
                 confidence=0.0

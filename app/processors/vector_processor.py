@@ -71,17 +71,47 @@ class VectorProcessor(BaseProcessor):
         pass
         
     def _extract_yaml_blocks(self, content: str) -> List[Dict[str, Any]]:
-        """Extract YAML blocks from document content"""
-        yaml_pattern = r'```yaml\s+(.*?)\s+```'
+        """
+        Extract YAML blocks from document content, handling cases where closing
+        backticks might be in a different chunk.
+        
+        Args:
+            content: Document content containing YAML blocks
+            
+        Returns:
+            List of parsed YAML data dictionaries
+        """
+        # Pattern for complete YAML blocks
+        complete_pattern = r'```yaml\s+(.*?)\s+```'
+        # Pattern for YAML blocks without closing backticks
+        open_pattern = r'```yaml\s+(.*?)(?:\Z|(?=\n#))'
+        
         yaml_blocks = []
         
-        for yaml_match in re.finditer(yaml_pattern, content, re.DOTALL):
-            try:
-                yaml_content = yaml_match.group(1)
-                yaml_data = yaml.safe_load(yaml_content)
-                yaml_blocks.append(yaml_data)
-            except Exception as e:
-                logger.error(f'Error parsing YAML block: {e}')
+        # First try to find complete blocks
+        complete_matches = list(re.finditer(complete_pattern, content, re.DOTALL))
+        
+        if complete_matches:
+            # Process complete matches
+            for yaml_match in complete_matches:
+                try:
+                    yaml_content = yaml_match.group(1)
+                    yaml_data = yaml.safe_load(yaml_content)
+                    yaml_blocks.append(yaml_data)
+                except Exception as e:
+                    logger.error(f'Error parsing YAML block: {e}', exc_info=True)
+        else:
+            # If no complete blocks found, look for open blocks
+            for yaml_match in re.finditer(open_pattern, content, re.DOTALL):
+                try:
+                    yaml_content = yaml_match.group(1).strip()
+                    # Clean up any trailing text that might not be part of the YAML
+                    if '```' in yaml_content:
+                        yaml_content = yaml_content.split('```')[0]
+                    yaml_data = yaml.safe_load(yaml_content)
+                    yaml_blocks.append(yaml_data)
+                except Exception as e:
+                    logger.error(f'Error parsing partial YAML block: {e}', exc_info=True)
         
         return yaml_blocks
         
@@ -180,8 +210,8 @@ class VectorProcessor(BaseProcessor):
         if document_notes:
             yaml_block = self._extract_yaml_blocks(document_notes)
             if yaml_block:
-                metadata['collection'] = yaml_block[0].get('collection')
-                metadata['tags'] = yaml_block[0].get('tags', [])
+                metadata['collection'] = yaml_block[0].get('Collection', 'Setting Notes')
+                metadata['tags'] = yaml_block[0].get('Tags', [])
 
         # Loop through markdown chunks and extract YAML blocks
         processed_chunks = []

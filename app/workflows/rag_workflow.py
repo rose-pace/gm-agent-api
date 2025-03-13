@@ -85,7 +85,7 @@ class RAGWorkflow(BaseWorkflow):
             )
             
         except Exception as e:
-            logger.error(f'Error executing RAG workflow: {e}')
+            logger.error(f'Error executing RAG workflow: {e}', exc_info=True)
             return WorkflowResult(
                 answer=f"I'm sorry, I encountered an error while processing your request: {str(e)}",
                 confidence=0.0

@@ -617,9 +617,9 @@ Cultural Elements:
 ```yaml
 Inspirational Resources:
     Literary Sources:
-        - "The Epic of Gilgamesh" (Standard Version)
-        - "Myths from Mesopotamia" by Stephanie Dalley
-        - "The Buried Book" by David Damrosch
+        - '"The Epic of Gilgamesh" (Standard Version)'
+        - '"Myths from Mesopotamia" by Stephanie Dalley'
+        - '"The Buried Book" by David Damrosch'
         
     Visual References:
         - Mesopotamian relief sculptures
@@ -631,8 +631,8 @@ Inspirational Resources:
 ```yaml
 Cross References:
     Direct References:
-        - "Mesopotamian Pantheon" (mesopotamian-pantheon.md): Complete deity listings
-        - "Ancient City-States" (ancient-city-states.md): Detailed urban information
+        - '"Mesopotamian Pantheon" (mesopotamian-pantheon.md): Complete deity listings'
+        - '"Ancient City-States" (ancient-city-states.md): Detailed urban information'
     Key Concepts Referenced:
         - Divine Hierarchy (defined in mesopotamian-pantheon.md)
         - Mortality and Immortality (defined here)
@@ -648,12 +648,12 @@ Collection Membership:
 
 Document Relationships:
     Parent Documents:
-        - "Ancient Mythic Campaigns Framework" ancient-mythic-framework.md (provides structural context)
+        - '"Ancient Mythic Campaigns Framework" ancient-mythic-framework.md (provides structural context)'
     Child Documents:
-        - "Monsters of Mesopotamia" mesopotamian-monsters.md (expands on creature details)
-        - "Divine Magic in Uruk" uruk-divine-magic.md (expands on magical systems)
+        - '"Monsters of Mesopotamia" mesopotamian-monsters.md (expands on creature details)'
+        - '"Divine Magic in Uruk" uruk-divine-magic.md (expands on magical systems)'
     Lateral Relationships:
-        - "Heroes of Antiquity" ancient-heroes.md (connected through heroic archetypes)
+        - '"Heroes of Antiquity" ancient-heroes.md (connected through heroic archetypes)'
     External References:
         - D&D Monster Manual (2024 Edition) (pp. 171, 213, 234, 310, 337: Related creature statistics)
         - Player's Handbook (2024 Edition) (pp. 58-59: Cleric domains mechanics)

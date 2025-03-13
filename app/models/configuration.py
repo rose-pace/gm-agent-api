@@ -35,7 +35,7 @@ class HuggingFaceModelConfig(BaseModelConfig):
         """Ensure required parameters have defaults if not provided"""
         defaults = {
             'temperature': 0.7,
-            'max_length': 1024,
+            'max_tokens': 1024,
             'top_p': 0.95,
         }
         

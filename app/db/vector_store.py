@@ -1,4 +1,5 @@
 import os
+from typing import Any
 import chromadb
 from chromadb.utils import embedding_functions
 import os
@@ -31,6 +32,12 @@ class VectorStore:
         )
         
         # Get or create the collection
+        self._get_or_create_collection(collection_name)
+
+    def _get_or_create_collection(self, collection_name: str):
+        """
+        Set the collection name for the vector store
+        """
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=self.embedding_function
@@ -43,17 +50,17 @@ class VectorStore:
         Args:
             document: The document to add
         """
-        documents = [d.content for d in documents]
+        contents = [d.content for d in documents]
         metadatas = [d.metadata for d in documents]
         ids = [d.id if d.id is not None else str(hash(d.content)) for d in documents]
         
         # Add the document to the collection
         self.collection.add(
-            documents=documents,
-            metadatas=metadatas,
+            documents=contents,
+            metadatas=self._transform_metadatas_for_storage(metadatas),
             ids=ids
         )
-    
+
     async def query(self, query_text: str, metadata_filters: dict = None, documents_filter: dict = None, top_k: int = 3):
         """
         Query the vector store for relevant documents
@@ -114,4 +121,74 @@ class VectorStore:
         """
         Clear all documents from the collection
         """
-        self.collection.delete()
+        collection_name = self.collection.name
+        self.client.delete_collection(collection_name)
+        self._get_or_create_collection(collection_name)
+
+    def _transform_metadatas_for_storage(self, metadatas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """
+        Transform metadata for storage in the vector store
+        by flattening nested lists and dictionaries.
+        
+        Args:
+            metadatas: List of metadata dictionaries
+        
+        Returns:
+            List of transformed metadata dictionaries
+        """
+        transformed_metadatas = []
+        for metadata in metadatas:
+            transformed_metadata = {}
+            for key, value in metadata.items():
+                if isinstance(value, dict):
+                    transformed_metadata.update(self._flatten_dict(value, parent_key=key))
+                elif isinstance(value, list):
+                    transformed_metadata.update(self._flatten_list(value, parent_key=key))
+                else:
+                    transformed_metadata[key] = value
+            transformed_metadatas.append(transformed_metadata)
+        return transformed_metadatas
+    
+    def _flatten_dict(self, d: dict, parent_key: str = '') -> dict:
+        """
+        Flatten a dictionary by concatenating nested keys.
+        
+        Args:
+            d: The dictionary to flatten
+            parent_key: The parent key for the current dictionary
+        
+        Returns:
+            Flattened dictionary
+        """
+        items = []
+        for k, v in d.items():
+            new_key = f'{parent_key}_{k}' if parent_key else k
+            if isinstance(v, dict):
+                items.extend(self._flatten_dict(v, parent_key=new_key).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+    
+    def _flatten_list(self, l: list, parent_key: str = '') -> dict:
+        """
+        Flatten a list by concatenating nested keys.
+        
+        Args:
+            l: The list to flatten
+            parent_key: The parent key for the current list
+
+        Returns:
+#             Flattened dictionary
+#         """
+        items = []
+        for i, v in enumerate(l):
+            new_key = f'{parent_key}_{i}' if parent_key else str(i)  
+            if isinstance(v, dict):
+                items.extend(self._flatten_dict(v, parent_key=new_key).items())
+            elif isinstance(v, list):
+                items.extend(self._flatten_list(v, parent_key=new_key).items())
+            else:
+                new_key = f'{parent_key}_{v}' if parent_key else str(v)
+                items.append((new_key, 1))
+        return dict(items)
+    
