@@ -457,7 +457,7 @@ class AzureAIInferenceModelProvider(ModelProvider):
         self.config = config
         
         try:
-            from azure.ai.inference import InferenceClient
+            from azure.ai.inference import ChatCompletionsClient
             from azure.core.credentials import AzureKeyCredential
             
             # Get API key from config or environment
@@ -466,7 +466,7 @@ class AzureAIInferenceModelProvider(ModelProvider):
                 raise ValueError('Azure AI Inference API key not provided in config or environment (AZURE_AI_INFERENCE_API_KEY) or (GITHUB_TOKEN)')
             
             # Initialize the client
-            self._client = InferenceClient(
+            self._client = ChatCompletionsClient(
                 endpoint=config.endpoint,
                 credential=AzureKeyCredential(api_key)
             )
@@ -493,18 +493,30 @@ class AzureAIInferenceModelProvider(ModelProvider):
         Returns:
             Generated text response from the model
         """
-        try:
+        try:            
+            from azure.ai.inference.models import AssistantMessage, SystemMessage, UserMessage
             # Format messages
             messages = []
             if system_message:
-                messages.append({'role': 'system', 'content': system_message})
+                messages.append(SystemMessage(system_message))
             
             # Add history if provided
             if history:
-                messages.extend(history)
+                for msg in history:
+                    role = msg.get('role', 'user')
+                    content = msg.get('content', '')
+                    if not content:
+                        continue
+                    # Map roles to Azure AI Inference format
+                    if role == 'system':
+                        continue  # System messages are handled separately
+                    elif role == 'assistant':
+                        messages.append(AssistantMessage(content))
+                    else:
+                        messages.append(UserMessage(content))
             
             # Add current prompt
-            messages.append({'role': 'user', 'content': prompt})
+            messages.append(UserMessage(prompt))
             
             # Prepare parameters based on configuration
             params = {
@@ -521,7 +533,7 @@ class AzureAIInferenceModelProvider(ModelProvider):
             # Get response using the deployment name if specified, otherwise use model
             model_name = self.config.deployment_name or self.config.model
             
-            response = await self._client.chat_completions.create_async(
+            response = self._client.complete(
                 model=model_name,
                 messages=messages,
                 **params
