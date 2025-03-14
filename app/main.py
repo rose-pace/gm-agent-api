@@ -1,8 +1,16 @@
+import os
 from typing import Optional
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+# Check if environment is running it github codespaces
+if 'CODESPACES' in os.environ:
+    # If so, update the version of sqlite
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 # Import our agent and tool modules
 from app.agents.gm_assistant import GMAssistantAgent

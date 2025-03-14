@@ -1,7 +1,8 @@
 from app.models import RAGResult
 from app.utils.prompt_generator import generate_rag_query, RAGQueryParams
 from app.db.vector_store import VectorStore
-from app.classifiers.light_embed_classifier import LightEmbeddingClassifier
+# TODO: update classifier so it works in github codespaces
+# from app.classifiers.light_embed_classifier import LightEmbeddingClassifier
 from typing import Optional, Dict, Any
     
 class RAGTool:
@@ -11,7 +12,7 @@ class RAGTool:
     """
     
     def __init__(self, vector_store: VectorStore=None, 
-                 classifier: Optional[LightEmbeddingClassifier]=None,
+                 classifier: Any=None, # Optional[LightEmbeddingClassifier]=None,
                  metadata_path: str='./data/document_metadata.json'):
         """
         Initialize the RAG tool with a vector store
@@ -24,12 +25,13 @@ class RAGTool:
         self.vector_store = vector_store
         self.name = 'rag_tool'
         self.classifier = classifier
-        if not self.classifier:
-            try:
-                self.classifier = LightEmbeddingClassifier(metadata_path)
-            except Exception as e:
-                print(f"Could not initialize classifier: {e}")
-                self.classifier = None
+        # TODO: update classifier so it works in github codespaces
+        # if not self.classifier:
+        #     try:
+        #         self.classifier = LightEmbeddingClassifier(metadata_path)
+        #     except Exception as e:
+        #         print(f"Could not initialize classifier: {e}")
+        #         self.classifier = None
     
     async def retrieve(self, query: str, top_k: int = 3, context: str = None, query_type: str = 'specific') -> RAGResult:
         """

@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional, Union, Literal
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from app.models.configuration import ModelConfig, HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig
+from app.models.configuration import ModelConfig, HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig, GitHubOpenAIModelConfig
 
 
 class WorkflowType(str, Enum):

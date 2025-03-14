@@ -13,6 +13,13 @@ from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
 
+# Check if environment is running it github codespaces
+if 'CODESPACES' in os.environ:
+    # If so, update the version of sqlite
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 # Add the project root to sys.path before importing app modules
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
