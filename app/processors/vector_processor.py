@@ -217,7 +217,10 @@ class VectorProcessor(BaseProcessor):
         processed_chunks = []
         
         for i, chunk in enumerate(chunks):
-            chunk_header = chunk.split('\n')[0].strip(' #')
+            chunk_header = chunk.split('\n')[0].strip(' #`')
+            if not chunk_header:
+                # get next line if header is empty (likely the end of a yaml block)
+                chunk_header = chunk.split('\n')[1].strip(' #`')
             yaml_blocks = self._extract_yaml_blocks(chunk)
             
             for j, yaml_block in enumerate(yaml_blocks):
