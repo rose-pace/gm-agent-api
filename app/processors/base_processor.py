@@ -4,7 +4,6 @@ Base Processor Interface
 Defines the interface that all document processors must implement.
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
 from pathlib import Path
 
 

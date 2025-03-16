@@ -3,10 +3,9 @@ Document Processor Coordinator
 
 Orchestrates the document processing workflow, delegating to specialized processors.
 """
-import os
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Type
+from typing import List, Optional
 
 from app.processors.base_processor import BaseProcessor
 
