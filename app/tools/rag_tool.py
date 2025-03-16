@@ -33,7 +33,7 @@ class RAGTool:
         #         print(f"Could not initialize classifier: {e}")
         #         self.classifier = None
     
-    async def retrieve(self, query: str, top_k: int = 3, context: str = None, query_type: str = 'specific') -> RAGResult:
+    async def retrieve(self, query: str, top_k: int = 5) -> RAGResult:
         """
         Retrieve relevant documents for the given query
         
@@ -50,11 +50,14 @@ class RAGTool:
             return RAGResult(text='No vector store available')
             
         # Generate optimized search query using the template
-        search_query = generate_rag_query(RAGQueryParams(
-            user_query=query,
-            context=context,
-            query_type=query_type
-        ))
+        # TODO: add query writer to rag_tool
+        # query_writer_instruction = generate_rag_query(RAGQueryParams(
+        #     user_query=query,
+        #     context=context,
+        #     query_type=query_type
+        # ))
+
+        search_query = query # TODO: pass query_writer_instruction to query writer
         
         # Use classifier to generate metadata filters if available
         metadata_filter = None

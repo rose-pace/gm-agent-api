@@ -5,12 +5,13 @@ import yaml
 import logging
 from pathlib import Path
 
-from app.utils.prompt_generator import generate_agent_instruction, AgentInstructionParams, Tool
+from app.utils.prompt_generator import generate_agent_instruction, AgentInstructionParams
 from app.workflows.workflow_manager import WorkflowManager
-from app.tools.rag_tools import RAGTool
+from app.tools.rag_tool import RAGTool
 from app.tools.graph_query_tool import GraphQueryTool
 from app.tools.graph_query_handler import GraphQueryHandler
 from app.models.agent_config import AgentConfig
+from app.utils.serialization import to_serializable_dict
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -21,20 +22,15 @@ class GMAssistantAgent:
     using a configurable workflow system.
     """
     
-    def __init__(self, tools=None, components=None, game_system=None, campaign_setting=None, 
-                 config_path: Optional[str] = None):
+    def __init__(self, tools=None, components=None, config_path: Optional[str] = None):
         """
         Initialize the GM Assistant Agent with the given tools
         
         Args:
             tools: List of tools the agent can use
             components: Dictionary of components the agent can use
-            game_system: Optional game system to specialize in
-            campaign_setting: Optional campaign setting
             config_path: Path to agent configuration file
         """
-        self.game_system = game_system
-        self.campaign_setting = campaign_setting
         
         # Initialize tool and component registries
         self.tools_registry = {}
@@ -62,20 +58,6 @@ class GMAssistantAgent:
         
         # Create or load workflow manager
         self.workflow_manager = self._initialize_workflow_manager(config_path)
-        
-        # Generate the system prompt for the agent
-        tool_models = []
-        for name, tool in self.tools_registry.items():
-            tool_desc = getattr(tool, 'description', 'No description available')
-            tool_models.append(Tool(name=name, description=tool_desc))
-        
-        self.system_prompt = generate_agent_instruction(
-            AgentInstructionParams(
-                game_system=self.game_system,
-                campaign_setting=self.campaign_setting,
-                tools=tool_models
-            )
-        )
     
     def _initialize_workflow_manager(self, config_path: str) -> WorkflowManager:
         """
@@ -125,15 +107,8 @@ class GMAssistantAgent:
             # Process the query using the workflow manager
             result = await self.workflow_manager.process_query(query, context)
             
-            # Format the response
-            response = {
-                'answer': result.answer,
-                'sources': result.sources,
-                'confidence': result.confidence,
-                'metadata': result.metadata
-            }
-            
-            return response
+            # Use the serialization utility to convert result to JSON-serializable dict
+            return to_serializable_dict(result)
             
         except Exception as e:
             logger.error(f"Error processing query: {e}", exc_info=True)

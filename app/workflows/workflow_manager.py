@@ -12,9 +12,9 @@ from app.models.agent_config import AgentConfig, WorkflowConfig, WorkflowType
 from app.models.configuration import ModelConfig
 from app.llm.model_provider import ModelProviderFactory
 from app.workflows.base_workflow import BaseWorkflow, WorkflowResult
-from app.workflows.rag_workflow import RAGWorkflow
-from app.workflows.graph_workflow import GraphWorkflow
-from app.workflows.hybrid_workflow import HybridWorkflow
+from app.models.model_response import ModelResponse, ToolCall
+from app.models.tool_use import Tool, ToolParameter
+from app.workflows.simple_workflow import SimpleWorkflow
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -39,12 +39,9 @@ class WorkflowManager:
         """
         self.config = None
         self.workflows: Dict[str, BaseWorkflow] = {}
-        self.tools = tools or {}
         self.components = components or {}
         self._workflow_classes: Dict[WorkflowType, Type[BaseWorkflow]] = {
-            WorkflowType.RAG: RAGWorkflow,
-            # WorkflowType.GRAPH: GraphWorkflow,
-            WorkflowType.HYBRID: HybridWorkflow,
+            WorkflowType.SIMPLE: SimpleWorkflow,
         }
         
         # Load configuration
@@ -56,7 +53,7 @@ class WorkflowManager:
             raise ValueError("Either config_path or config must be provided")
         
         # Initialize workflows
-        self._initialize_workflows()
+        self._initialize_workflows(tools)
     
     def _load_config(self, config_path: str) -> None:
         """
@@ -64,6 +61,7 @@ class WorkflowManager:
         
         Args:
             config_path: Path to the configuration file
+            tools: Dictionary of tool instances to use
             
         Raises:
             ValueError: If the file format is not supported or file doesn't exist
@@ -88,13 +86,31 @@ class WorkflowManager:
             logger.error(f"Error loading configuration: {e}")
             raise ValueError(f"Failed to load configuration: {str(e)}")
     
-    def _initialize_workflows(self) -> None:
+    def _initialize_workflows(self, tools: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize workflow instances based on configuration
         """
         if not self.config:
             logger.error("Cannot initialize workflows: no configuration loaded")
             return
+        
+        # TODO: Refactor workflow initialization to use factory pattern
+        # For now just initialize the simple workflow
+        self.workflows[WorkflowType.SIMPLE] = SimpleWorkflow(
+            name="Simple Workflow",
+            model_provider=ModelProviderFactory.create_provider(self.config.configuration.get_default_model()),
+            tools=[
+                Tool(
+                    name='rag_tool',
+                    description='Vector-based retrieval tools for querying campaign data',
+                    function=tools['rag_tool'].retrieve, # TODO: need to make this less dependent on specific tool
+                    parameters=[
+                        ToolParameter(name='query', type='string', description='query to find results from vector-store', required=True),
+                        ToolParameter(name='top_k', type='integer', description='Maximum number of documents to retrieve', required=False, default=5)
+                    ]
+                )
+            ]
+        )
         
         for workflow_config in self.config.workflows:
             try:
@@ -116,14 +132,6 @@ class WorkflowManager:
                     logger.warning(f"Workflow type {workflow_config.type} not supported")
                     continue
                 
-                # Prepare workflow tools
-                workflow_tools = {}
-                for tool_config in workflow_config.tools:
-                    if tool_config.name in self.tools:
-                        workflow_tools[tool_config.name] = self.tools[tool_config.name]
-                    else:
-                        logger.warning(f"Tool {tool_config.name} not available")
-                
                 # Prepare workflow components
                 workflow_components = {}
                 for component_name in workflow_config.components:
@@ -136,7 +144,7 @@ class WorkflowManager:
                 workflow = workflow_class(
                     name=workflow_config.name,
                     model_provider=model_provider,
-                    tools=workflow_tools,
+                    tools=workflow_config.tools,
                     components=workflow_components
                 )
                 
@@ -161,35 +169,38 @@ class WorkflowManager:
         Raises:
             ValueError: If no workflow is available
         """
-        if not self.workflows:
-            raise ValueError("No workflows available")
+        return self.workflows.get(WorkflowType.SIMPLE)
+    
+        # TODO: get intent of query using simple extraction and select workflow based on intent
+        # if not self.workflows:
+        #     raise ValueError("No workflows available")
         
-        # Get the workflows sorted by priority (highest first)
-        sorted_workflows = sorted(
-            self.config.workflows,
-            key=lambda w: w.activation.priority,
-            reverse=True
-        )
+        # # Get the workflows sorted by priority (highest first)
+        # sorted_workflows = sorted(
+        #     self.config.workflows,
+        #     key=lambda w: w.activation.priority,
+        #     reverse=True
+        # )
         
-        # Check for keyword matches
-        query_lower = query.lower()
-        for workflow_config in sorted_workflows:
-            for keyword in workflow_config.activation.keywords:
-                if keyword.lower() in query_lower:
-                    workflow = self.workflows.get(workflow_config.name)
-                    if workflow:
-                        logger.info(f"Selected workflow '{workflow_config.name}' based on keyword match: {keyword}")
-                        return workflow
+        # # Check for keyword matches
+        # query_lower = query.lower()
+        # for workflow_config in sorted_workflows:
+        #     for keyword in workflow_config.activation.keywords:
+        #         if keyword.lower() in query_lower:
+        #             workflow = self.workflows.get(workflow_config.name)
+        #             if workflow:
+        #                 logger.info(f"Selected workflow '{workflow_config.name}' based on keyword match: {keyword}")
+        #                 return workflow
         
-        # If no keyword match, use default workflow
-        default_config = self.config.get_default_workflow()
-        if default_config and default_config.name in self.workflows:
-            logger.info(f"Using default workflow: {default_config.name}")
-            return self.workflows[default_config.name]
+        # # If no keyword match, use default workflow
+        # default_config = self.config.get_default_workflow()
+        # if default_config and default_config.name in self.workflows:
+        #     logger.info(f"Using default workflow: {default_config.name}")
+        #     return self.workflows[default_config.name]
         
-        # If no default is set, use the first available workflow
-        logger.warning("No default workflow set, using first available")
-        return next(iter(self.workflows.values()))
+        # # If no default is set, use the first available workflow
+        # logger.warning("No default workflow set, using first available")
+        # return next(iter(self.workflows.values()))
     
     async def process_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> WorkflowResult:
         """
@@ -206,7 +217,7 @@ class WorkflowManager:
             # Select the appropriate workflow
             workflow = await self.select_workflow(query, context)
             
-            # Execute the workflow
+            # Execute the workflow - this now includes tool calling capability
             logger.info(f"Executing workflow: {workflow.name}")
             result = await workflow.execute(query, context)
             

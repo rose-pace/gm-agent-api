@@ -1,8 +1,10 @@
 import os
+import json
 from typing import Optional
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Check if environment is running it github codespaces
@@ -14,7 +16,7 @@ if 'CODESPACES' in os.environ:
 
 # Import our agent and tool modules
 from app.agents.gm_assistant import GMAssistantAgent
-from app.tools.rag_tools import RAGTool
+from app.tools.rag_tool import RAGTool
 from app.db import VectorStore
 from app.models import Query, Response, Document, GraphEdge, GraphNode
 from app.utils.prompt_generator import initialize_prompts
@@ -84,7 +86,7 @@ async def root():
     return {'message': 'Welcome to the Game Master Assistant API'}
 
 @app.post('/ask', response_model=Response)
-async def ask_question(query: Query):
+async def ask_question(query: Query) -> Response:
     """
     Ask the GM assistant a question about the campaign or setting
     """
@@ -93,7 +95,7 @@ async def ask_question(query: Query):
     
     try:
         response = await gm_agent.process_query(query.text, query.context)
-        return response
+        return JSONResponse(response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Error processing query: {str(e)}')
 
