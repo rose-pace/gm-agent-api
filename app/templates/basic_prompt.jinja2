@@ -1,0 +1,13 @@
+{% if context %}
+Use the following context to answer the question:
+{{ context }}
+{% endif %}
+
+{% if history %}
+chat history:
+{% for qna in history %}
+{{qna.role}}: {{ qna.message }}
+{% endfor %}
+{% endif %}
+
+Question: {{ prompt }}

@@ -6,8 +6,9 @@ import logging
 
 from app.workflows.base_workflow import BaseWorkflow, WorkflowResult
 from app.llm.model_provider import ModelProvider
-from app.tools.rag_tools import RAGTool
+from app.tools.rag_tool import RAGTool
 from app.tools.graph_query_tool import GraphQueryTool
+from app.models.tool_use import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class HybridWorkflow(BaseWorkflow):
     Workflow that combines RAG retrieval with graph database queries.
     """
     
-    def __init__(self, name: str, model_provider: ModelProvider, tools: Dict[str, Any] = None,
+    def __init__(self, name: str, model_provider: ModelProvider, tools: List[Tool] = None,
                  components: Dict[str, Any] = None, top_k: int = 3,
                  system_prompt: str = None):
         """
@@ -25,7 +26,7 @@ class HybridWorkflow(BaseWorkflow):
         Args:
             name: Name of the workflow
             model_provider: LLM provider to use
-            tools: Dictionary of tools available to the workflow
+            tools: List of tools available to the workflow
             components: Dictionary of higher-level components available to the workflow
             top_k: Number of documents to retrieve
             system_prompt: Optional system prompt template

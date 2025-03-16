@@ -7,6 +7,7 @@ import logging
 from app.workflows.base_workflow import BaseWorkflow, WorkflowResult
 from app.llm.model_provider import ModelProvider
 from app.tools.graph_query_handler import GraphQueryHandler
+from app.models.tool_use import Tool
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class GraphWorkflow(BaseWorkflow):
     Workflow for answering questions about entities and relationships in the graph database.
     """
     
-    def __init__(self, name: str, model_provider: ModelProvider, tools: Dict[str, Any] = None,
+    def __init__(self, name: str, model_provider: ModelProvider, tools: List[Tool] = None,
                  components: Dict[str, Any] = None, system_prompt: str = None):
         """
         Initialize the graph workflow
@@ -23,7 +24,7 @@ class GraphWorkflow(BaseWorkflow):
         Args:
             name: Name of the workflow
             model_provider: LLM provider to use
-            tools: Dictionary of tools available to the workflow
+            tools: List of tools available to the workflow
             components: Dictionary of higher-level components available to the workflow
             system_prompt: Optional system prompt template
         """

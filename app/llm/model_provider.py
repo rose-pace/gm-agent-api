@@ -4,6 +4,7 @@ Model provider interface and implementations for different LLM providers.
 from typing import Dict, Any, Optional, List, Union
 import os
 import logging
+import json
 from abc import ABC, abstractmethod
 
 from app.models.configuration import (
@@ -11,6 +12,9 @@ from app.models.configuration import (
     HuggingFaceModelConfig, AzureOpenAIModelConfig, AnthropicModelConfig,
     GitHubOpenAIModelConfig, AzureAIInferenceModelConfig
 )
+from app.models.tool_use import Tool
+from app.models.model_response import ModelResponse, ToolCall
+from app.utils.tool_use_converter import get_provider_format
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -20,7 +24,9 @@ class ModelProvider(ABC):
     
     @abstractmethod
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, str]]] = None,
+                     tools: Optional[List[Tool]] = None,
+                     tool_results: Optional[List[Dict[str, Any]]] = None) -> ModelResponse:
         """
         Generate a response from the model
         
@@ -28,6 +34,7 @@ class ModelProvider(ABC):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
             
         Returns:
             Generated text response from the model
@@ -116,7 +123,8 @@ class HuggingFaceModelProvider(ModelProvider):
                 raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, str]]] = None,
+                     tools: Optional[List[Tool]] = None) -> str:
         """
         Generate a response using the Hugging Face model
         
@@ -124,6 +132,7 @@ class HuggingFaceModelProvider(ModelProvider):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
             
         Returns:
             Generated text response from the model
@@ -142,11 +151,22 @@ class HuggingFaceModelProvider(ModelProvider):
                 # Add current prompt
                 messages.append({"role": "user", "content": prompt})
                 
+                # Prepare API call parameters
+                api_params = dict(self.config.parameters)
+                
+                # Add tools if provided
+                if tools:
+                    try:
+                        formatted_tools = get_provider_format(tools, 'huggingface')
+                        api_params['tools'] = formatted_tools
+                    except Exception as e:
+                        logger.warning(f'Error formatting tools for Hugging Face: {e}')
+                
                 # Get response
                 response = self._client.chat_completion(
                     messages,
                     model=self.config.model,
-                    **self.config.parameters
+                    **api_params
                 )
                 
                 return response.choices[0].message.content
@@ -233,7 +253,8 @@ class AzureOpenAIModelProvider(ModelProvider):
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, str]]] = None,
+                     tools: Optional[List[Tool]] = None) -> str:
         """
         Generate a response using the Azure OpenAI model
         
@@ -241,6 +262,7 @@ class AzureOpenAIModelProvider(ModelProvider):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
             
         Returns:
             Generated text response from the model
@@ -258,11 +280,22 @@ class AzureOpenAIModelProvider(ModelProvider):
             # Add current prompt
             messages.append({"role": "user", "content": prompt})
             
+            # Prepare API call parameters
+            api_params = dict(self.config.parameters)
+            
+            # Add tools if provided
+            if tools:
+                try:
+                    formatted_tools = get_provider_format(tools, 'azure_openai')
+                    api_params['tools'] = formatted_tools
+                except Exception as e:
+                    logger.warning(f'Error formatting tools for Azure OpenAI: {e}')
+            
             # Get response
             response = await self._client.chat.completions.create(
                 model=self.config.deployment_name,  # Azure uses deployment name, not model name
                 messages=messages,
-                **self.config.parameters
+                **api_params
             )
             
             return response.choices[0].message.content
@@ -309,7 +342,8 @@ class AnthropicModelProvider(ModelProvider):
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, str]]] = None,
+                     tools: Optional[List[Tool]] = None) -> str:
         """
         Generate a response using the Anthropic model
         
@@ -317,6 +351,7 @@ class AnthropicModelProvider(ModelProvider):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
             
         Returns:
             Generated text response from the model
@@ -346,12 +381,24 @@ class AnthropicModelProvider(ModelProvider):
             # Add current prompt
             messages.append({"role": "user", "content": prompt})
             
+            # Prepare API call parameters
+            api_params = dict(self.config.parameters)
+            
+            # Add tools if provided
+            if tools:
+                try:
+                    formatted_tools = get_provider_format(tools, 'anthropic')
+                    # Anthropic expects tools in a specific format
+                    api_params.update(formatted_tools)
+                except Exception as e:
+                    logger.warning(f'Error formatting tools for Anthropic: {e}')
+            
             # Get response
             response = await self._client.messages.create(
                 model=self.config.model,
                 messages=messages,
                 system=system_message,
-                **self.config.parameters
+                **api_params
             )
             
             return response.content[0].text
@@ -401,7 +448,9 @@ class GitHubOpenAIModelProvider(ModelProvider):
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, str]]] = None,
+                     tools: Optional[List[Tool]] = None,
+                     tool_results: Optional[List[Dict[str, Any]]] = None) -> ModelResponse:
         """
         Generate a response using the GitHub OpenAI model
         
@@ -409,6 +458,7 @@ class GitHubOpenAIModelProvider(ModelProvider):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
             
         Returns:
             Generated text response from the model
@@ -422,15 +472,31 @@ class GitHubOpenAIModelProvider(ModelProvider):
             # Add history if provided
             if history:
                 messages.extend(history)
+
+            if tool_results:
+                for result in tool_results:
+                    messages.append({'role': 'tool', 'tool_call_id': result.get('tool_call_id', ''), 'content': result.get('result', '')})
             
             # Add current prompt
-            messages.append({'role': 'user', 'content': prompt})
+            if prompt:
+                messages.append({'role': 'user', 'content': prompt})
+            
+            # Prepare API call parameters
+            api_params = dict(self.config.parameters)
+            
+            # Add tools if provided
+            if tools:
+                try:
+                    formatted_tools = get_provider_format(tools, 'openai')
+                    api_params['tools'] = formatted_tools
+                except Exception as e:
+                    logger.warning(f'Error formatting tools for GitHub OpenAI: {e}')
             
             # Get response
             response = await self._client.chat.completions.create(
                 model=self.config.model,
                 messages=messages,
-                **self.config.parameters
+                **api_params
             )
             
             return response.choices[0].message.content
@@ -461,13 +527,14 @@ class AzureAIInferenceModelProvider(ModelProvider):
             from azure.core.credentials import AzureKeyCredential
             
             # Get API key from config or environment
+            endpoint = config.endpoint or os.environ.get('AZURE_AI_INFERENCE_ENDPOINT')
             api_key = config.api_key or os.environ.get('AZURE_AI_INFERENCE_API_KEY') or os.environ.get('GITHUB_TOKEN')
             if not api_key:
                 raise ValueError('Azure AI Inference API key not provided in config or environment (AZURE_AI_INFERENCE_API_KEY) or (GITHUB_TOKEN)')
             
             # Initialize the client
             self._client = ChatCompletionsClient(
-                endpoint=config.endpoint,
+                endpoint=endpoint,
                 credential=AzureKeyCredential(api_key)
             )
             
@@ -481,7 +548,9 @@ class AzureAIInferenceModelProvider(ModelProvider):
             raise
     
     async def generate(self, prompt: str, system_message: Optional[str] = None, 
-                     history: Optional[List[Dict[str, str]]] = None) -> str:
+                     history: Optional[List[Dict[str, Any]]] = None,
+                     tools: Optional[List[Tool]] = None,
+                     tool_results: Optional[List[Dict[str, Any]]] = None) -> ModelResponse:
         """
         Generate a response using the Azure AI Inference model
         
@@ -489,12 +558,19 @@ class AzureAIInferenceModelProvider(ModelProvider):
             prompt: User prompt to send to the model
             system_message: Optional system message for context
             history: Optional conversation history
+            tools: Optional list of Tool objects to use
+            tool_results: Optional list of tool execution results
             
         Returns:
-            Generated text response from the model
+            ModelResponse containing either text content or tool call requests
         """
         try:            
-            from azure.ai.inference.models import AssistantMessage, SystemMessage, UserMessage
+            from azure.ai.inference.models import (
+                AssistantMessage, SystemMessage, UserMessage, 
+                ToolMessage, ChatCompletionsToolCall
+            )
+            from azure.core.exceptions import HttpResponseError
+            
             # Format messages
             messages = []
             if system_message:
@@ -505,30 +581,70 @@ class AzureAIInferenceModelProvider(ModelProvider):
                 for msg in history:
                     role = msg.get('role', 'user')
                     content = msg.get('content', '')
-                    if not content:
-                        continue
+                    tool_calls = msg.get('tool_calls')
                     # Map roles to Azure AI Inference format
                     if role == 'system':
                         continue  # System messages are handled separately
                     elif role == 'assistant':
-                        messages.append(AssistantMessage(content))
+                        if tool_calls:
+                            tool_calls = [ChatCompletionsToolCall(tc) if isinstance(tc, dict) else tc for tc in tool_calls]
+                        messages.append(AssistantMessage(content=content, tool_calls=tool_calls))
+                    elif role == 'tool':
+                        messages.append(ToolMessage(content, tool_call_id=msg.get('tool_call_id', '')))
                     else:
                         messages.append(UserMessage(content))
             
-            # Add current prompt
-            messages.append(UserMessage(prompt))
+            # Insert tool results if provided
+            if tool_results:
+                for result in tool_results:
+                    messages.append(ToolMessage(
+                        content=str(result.get('result', '')),
+                        tool_call_id=result.get('tool_call_id')
+                    ))
+            else:
+                # Add current prompt
+                messages.append(UserMessage(prompt))
             
             # Prepare parameters based on configuration
             params = {
-                'temperature': self.config.parameters.get('temperature', 0.7),
-                'max_tokens': self.config.parameters.get('max_tokens', 1000),
-                'top_p': self.config.parameters.get('top_p', 0.95),
+                'temperature': self.config.parameters.get('temperature', 1),
+                'max_tokens': self.config.parameters.get('max_tokens', 500),
+                'top_p': self.config.parameters.get('top_p', 1),
             }
             
             # Include other parameters from config
             for key, value in self.config.parameters.items():
                 if key not in params:
                     params[key] = value
+            
+            # Add tools if provided
+            if tools:
+                try:
+                    from azure.ai.inference.models import ChatCompletionsToolDefinition, FunctionDefinition
+                    
+                    # Azure AI Inference API uses a special format
+                    formatted_tools = get_provider_format(tools, 'azure_openai')  # Uses same format as OpenAI
+                    
+                    # Convert to Azure SDK format
+                    azure_tools = []
+                    for tool in formatted_tools:
+                        if tool['type'] == 'function':
+                            function_def = tool['function']
+                            azure_tools.append(ChatCompletionsToolDefinition(
+                                function=FunctionDefinition(
+                                    name=function_def['name'],
+                                    description=function_def['description'],
+                                    parameters=function_def['parameters']
+                                )
+                            ))
+                    
+                    if azure_tools:
+                        params['tools'] = azure_tools
+                        # params['tool_choice'] = ChatCompletionsNamedToolChoice(
+                        #     mapping={"type": "function", "function": {"name": "rag_tool"}}
+                        # )
+                except Exception as e:
+                    logger.warning(f'Error formatting tools for Azure AI Inference: {e}')
             
             # Get response using the deployment name if specified, otherwise use model
             model_name = self.config.deployment_name or self.config.model
@@ -537,13 +653,55 @@ class AzureAIInferenceModelProvider(ModelProvider):
                 model=model_name,
                 messages=messages,
                 **params
-            )
+            )            
+
+            # update history
+            if not history:
+                history = [
+                    { 'role': 'system', 'content': system_message }
+                ]
+            last_msg = messages[-1]
+            if isinstance(last_msg, ToolMessage):
+                history.append({ 'role': 'tool', 'content': last_msg.content, 'tool_call_id': last_msg.tool_call_id })
+            else:
+                history.append({ 'role': 'user', 'content': last_msg.content })
             
-            return response.choices[0].message.content
+            # Convert response to standardized format
+            assistant_msg = response.choices[0].message
+            content = assistant_msg.content
+            tool_calls = []
+            
+            # Check for tool calls in the message
+            if assistant_msg.tool_calls:
+                for tool_call in assistant_msg.tool_calls:
+                    try:
+                        arguments = json.loads(tool_call.function.arguments)
+                    except (json.JSONDecodeError, AttributeError):
+                        arguments = {}
+                    
+                    tool_calls.append(ToolCall(
+                        tool_name=tool_call.function.name,
+                        arguments=arguments,
+                        tool_call_id=tool_call.id
+                    ))
+
+            # append to history
+            history.append({ 'role': 'assistant', 'content': content, 'tool_calls': assistant_msg.tool_calls })
+            
+            return ModelResponse(
+                content=content,
+                history=history,
+                tool_calls=tool_calls,
+                raw_response=response
+            )
+        
+        except HttpResponseError as http_err:
+            logger.error(f'Http error generating text with Azure AI Inference model: {http_err.message}', exc_info=True)
+            return ModelResponse(content=f'HTTP error generating response: {str(http_err)}')
             
         except Exception as e:
             logger.error(f'Error generating text with Azure AI Inference model: {e}', exc_info=True)
-            return f'Error generating response: {str(e)}'
+            return ModelResponse(content=f'Error generating response: {str(e)}')
     
     def get_client(self) -> Any:
         """Get the underlying client"""

@@ -118,7 +118,7 @@ class GitHubOpenAIModelConfig(BaseModelConfig):
 class AzureAIInferenceModelConfig(BaseModelConfig):
     """Configuration for Azure AI Inference service models"""
     provider: Literal[ModelProviderType.AZURE_AI_INFERENCE] = ModelProviderType.AZURE_AI_INFERENCE
-    endpoint: str  # Required endpoint URL
+    endpoint: Optional[str] = None  # Will be loaded from env if not provided
     api_key: Optional[str] = None  # Will be loaded from env if not provided
     api_version: str = '2023-10-01-preview'  # Default API version
     deployment_name: Optional[str] = None  # Optional deployment name
